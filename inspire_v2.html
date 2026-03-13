@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSPIRE – Lifecycle Monitoring & Retrieval Management</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Calibri, sans-serif; background: #f0f4f8; color: #1a2a3a; display: flex; min-height: 100vh; }
+
+  #sidebar { width: 215px; min-width: 215px; background: #1a3a6b; display: flex; flex-direction: column; min-height: 100vh; }
+  .sidebar-logo { padding: 16px; border-bottom: 1px solid #2a5298; display: flex; align-items: center; gap: 10px; }
+  .logo-box { background: linear-gradient(135deg,#42a5f5,#1565c0); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 18px; }
+  .logo-name { color: #fff; font-weight: 800; font-size: 15px; letter-spacing: 1px; }
+  .logo-sub  { color: #7eaee0; font-size: 9px; letter-spacing: 1.5px; }
+  nav { flex: 1; padding: 8px 0; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; color: #cce0ff; font-size: 12.5px; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); }
+  .nav-item.active { background: linear-gradient(90deg,#1976d2,rgba(21,101,192,0.8)); border-left: 3px solid #42a5f5; color: #fff; font-weight: 700; }
+  .nav-icon { font-size: 14px; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid #2a5298; font-size: 11px; color: #7eaee0; }
+  .sidebar-footer span { color: #42a5f5; font-weight: 600; display: block; }
+
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topbar { background: linear-gradient(135deg,#1e4080,#1565c0); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; }
+  .topbar-title { color: #fff; font-weight: 700; font-size: 15px; }
+  .topbar-right { display: flex; align-items: center; gap: 20px; color: #cce0ff; font-size: 13px; }
+  .topbar-right strong { color: #fff; }
+  #content { flex: 1; padding: 20px 24px; overflow-y: auto; }
+  #footer { background: #fff; border-top: 1px solid #dde6f0; padding: 8px 24px; font-size: 11px; color: #607080; display: flex; justify-content: space-between; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card { border-radius: 10px; padding: 16px 18px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .stat-card .s-label { font-size: 11px; opacity: .85; font-weight: 500; }
+  .stat-card .s-val   { font-size: 30px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
+  .stat-card .s-sub   { font-size: 11px; opacity: .75; margin-top: 3px; }
+  .stat-blue   { background: linear-gradient(135deg,#1e88e5,#1565c0); }
+  .stat-teal   { background: linear-gradient(135deg,#00acc1,#00796b); }
+  .stat-orange { background: linear-gradient(135deg,#fb8c00,#e65100); }
+  .stat-green  { background: linear-gradient(135deg,#43a047,#2e7d32); }
+
+  .card { background: #fff; border: 1px solid #dde6f0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; margin-bottom: 14px; }
+  .sec-header { padding: 8px 16px; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.3px; }
+  .sec-blue   { background: linear-gradient(90deg,#1565c0,rgba(21,101,192,0.87)); }
+  .sec-teal   { background: linear-gradient(90deg,#00796b,rgba(0,121,107,0.87)); }
+  .sec-green  { background: linear-gradient(90deg,#2e7d32,rgba(46,125,50,0.87)); }
+  .card-body  { padding: 14px 16px; }
+
+  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .pill-active     { background:#e8f5e9; color:#2e7d32; } .pill-active .pill-dot     { background:#43a047; }
+  .pill-recovered  { background:#fff8e1; color:#f57f17; } .pill-recovered .pill-dot  { background:#ffa000; }
+  .pill-deceased   { background:#ffebee; color:#c62828; } .pill-deceased .pill-dot   { background:#ef5350; }
+  .pill-temporary  { background:#e3f2fd; color:#1565c0; } .pill-temporary .pill-dot  { background:#1976d2; }
+  .pill-permanent  { background:#ede7f6; color:#4527a0; } .pill-permanent .pill-dot  { background:#7c4dff; }
+  .pill-retrievable{ background:#fff3e0; color:#e65100; } .pill-retrievable .pill-dot{ background:#fb8c00; }
+  .pill-ready      { background:#e8f5e9; color:#2e7d32; } .pill-ready .pill-dot      { background:#43a047; }
+  .pill-certified  { background:#e3f2fd; color:#1565c0; } .pill-certified .pill-dot  { background:#1976d2; }
+  .pill-received   { background:#f3e5f5; color:#6a1b9a; } .pill-received .pill-dot   { background:#ab47bc; }
+  .pill-inprogress { background:#fff8e1; color:#f57f17; } .pill-inprogress .pill-dot { background:#ffa000; }
+  .pill-zone { border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+
+  .btn { border-radius: 4px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-primary  { background: #1976d2; color: #fff; }
+  .btn-success  { background: #2e7d32; color: #fff; }
+  .btn-orange   { background: #fb8c00; color: #fff; }
+  .btn-outline  { background: transparent; color: #1976d2; border: 1px solid #1976d2 !important; }
+  .btn-gray     { background: #90a4ae; color: #fff; }
+  .btn:hover    { opacity: .88; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: #e8f0fe; }
+  th { padding: 9px 12px; text-align: left; font-weight: 700; font-size: 11px; border-bottom: 1px solid #dde6f0; color: #1a2a3a; }
+  td { padding: 9px 12px; border-bottom: 1px solid #dde6f0; vertical-align: middle; }
+  tbody tr:nth-child(even) { background: #fafcff; }
+  tbody tr:hover { background: #e8f0fe; }
+  .teal-head thead tr { background: #e0f7f4; }
+
+  .prog-wrap { background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden; }
+  .prog-bar  { height: 100%; border-radius: 4px; }
+  .conf-wrap { display: flex; align-items: center; gap: 8px; }
+  .conf-bar  { flex: 1; background: #e0e0e0; border-radius: 4px; height: 7px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 4px; }
+
+  .steps-row { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .step-circle { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; border: 2px solid #bdbdbd; background: #e0e0e0; color: #9e9e9e; }
+  .step-done   { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+  .step-active { background: #1976d2; border-color: #1976d2; color: #fff; }
+  .step-line   { width: 10px; height: 2px; background: #e0e0e0; }
+  .step-line.done { background: #2e7d32; }
+
+  .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+  .patient-bar { display: flex; gap: 8px; margin-bottom: 2px; }
+  .patient-bar .pb-fill { flex: 1; height: 8px; border-radius: 2px; }
+  .impact-item { display: flex; align-items: center; gap: 12px; background: #f5f9ff; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .impact-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 800; }
+  .impact-val  { font-size: 18px; font-weight: 800; }
+  .impact-lbl  { font-size: 11px; color: #607080; }
+
+  .mkt-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 14px; padding: 14px 16px; }
+  .mkt-card { border: 1px solid #dde6f0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+  .mkt-top  { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .mkt-body { padding: 12px 14px; }
+  .mkt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .mkt-meta-item { background: #f5f9ff; border-radius: 6px; padding: 7px 10px; }
+  .mkt-meta-item .ml { font-size: 10px; color: #607080; }
+  .mkt-meta-item .mv { font-size: 12px; font-weight: 700; }
+  .confirm-box { margin-top: 8px; background: #e8f5e9; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #2e7d32; display: none; }
+
+  .zone-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
+  .zone-card { border: 2px solid #dde6f0; border-radius: 8px; padding: 12px 16px; cursor: pointer; transition: all 0.15s; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .zone-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+  .zone-card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .zone-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .zone-centre { font-size: 11px; color: #607080; margin-bottom: 10px; }
+  .zone-counts { display: flex; gap: 8px; }
+  .zone-count-box { flex: 1; border-radius: 6px; padding: 6px; text-align: center; }
+  .zone-count-val { font-size: 18px; font-weight: 800; }
+  .zone-count-lbl { font-size: 10px; color: #607080; }
+
+  .filter-bar { padding: 10px 16px; background: #f5f9ff; border-bottom: 1px solid #dde6f0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .filter-bar select { border: 1px solid #dde6f0; border-radius: 5px; padding: 6px 10px; font-size: 12px; color: #1a2a3a; background: #fff; }
+  .zone-pills { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 16px; background: #f5f9ff; border-bottom: 1px solid #dde6f0; align-items: center; }
+  .zone-pill { border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid #dde6f0; background: #fff; color: #1a2a3a; transition: all 0.15s; }
+  .zone-pill.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+
+  .expand-inner { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 12px; }
+  .expand-box { background: #fff; border-radius: 6px; padding: 10px 14px; border: 1px solid #dde6f0; }
+  .expand-lbl { font-size: 10px; color: #607080; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .expand-val { font-size: 12px; font-weight: 700; }
+
+  .info-bar { padding: 8px 16px; background: #e0f7f4; font-size: 12px; color: #004d40; display: flex; gap: 8px; align-items: center; }
+
+  .retrieval-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f4f8; }
+  .retrieval-label { flex: 1; font-size: 13px; font-weight: 500; }
+  .realloc-head { background: #f5f9ff; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-box">i</div>
+    <div>
+      <div class="logo-name">INSPIRE</div>
+      <div class="logo-sub">LIFECYCLE MGMT</div>
+    </div>
+  </div>
+  <nav id="nav">
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item" data-page="provision"><span class="nav-icon">📋</span> Medical Aid Provision</div>
+    <div class="nav-item" data-page="marketplace"><span class="nav-icon">🏪</span> Marketplace</div>
+    <div class="nav-item" data-page="refurbishment"><span class="nav-icon">🔧</span> Refurbishment Status</div>
+  </nav>
+  <div class="sidebar-footer">Case Manager<span>PP Putrajaya Office</span></div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title">Lifecycle Monitoring &amp; Retrieval Management</div>
+    <div class="topbar-right">
+      <strong>Case Manager</strong>
+      <span>Notifications</span>
+      <span>Settings</span>
+      <span>🔔</span>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div class="dash-grid">
+        <div>
+          <div class="card">
+            <div class="sec-header sec-blue">Patient Overview</div>
+            <div class="card-body">
+              <div style="font-size:13px;margin-bottom:12px;">
+                <strong style="font-size:15px;">Adam Bin Azman</strong>
+                <span style="color:#607080;margin:0 10px;">|</span>
+                <span style="color:#607080;">Case ID: </span><strong>18736160</strong>
+                <span style="color:#607080;margin:0 10px;">|</span>
+                <span style="color:#607080;">Category: </span><strong style="color:#1976d2;">HUK (Return to Work)</strong>
+              </div>
+              <div style="background:#f5f9ff;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:14px;">
+                <div style="font-size:40px;">♿</div>
+                <div style="flex:1;">
+                  <div style="font-size:13px;">
+                    <span style="color:#607080;">Current Aid: </span><strong>Wheelchair</strong>
+                    <span style="color:#607080;margin:0 12px;">|</span>
+                    <span style="color:#607080;">Issued: </span><strong>15 Feb 2026</strong>
+                    <span style="color:#607080;margin:0 12px;">|</span>
+                    <span style="color:#607080;">Status: </span><strong style="color:#2e7d32;">Temporary</strong>
+                  </div>
+                  <div class="patient-bar" style="margin-top:8px;">
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.7;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.85;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.55;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.9;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.4;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.65;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.8;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.5;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sec-header sec-blue">Status &amp; Prediction</div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px;">
+                <span style="font-weight:600;">Monthly Verification:</span>
+                <span class="pill pill-active"><span class="pill-dot"></span>Active</span>
+                <span style="color:#607080;">| Next Review:</span>
+                <strong style="color:#1976d2;">15 May 2026</strong>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;flex-wrap:wrap;">
+                <span style="font-weight:600;">Prediction:</span>
+                <span style="color:#fb8c00;font-weight:700;">Temporary Aid</span>
+                <span style="color:#607080;">|</span>
+                <span style="color:#607080;">Review in 2 Months</span>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-outline">Override Status</button>
+                <button class="btn btn-success">Update Progress</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sec-header sec-teal">Retrieval Alerts</div>
+            <div class="card-body">
+              <div class="retrieval-row">
+                <span style="font-size:16px;">✅</span>
+                <span class="retrieval-label">Recovery Confirmed</span>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button>
+                  <button class="btn btn-success" style="font-size:11px;padding:4px 12px;">Schedule Pickup</button>
+                  <button class="btn btn-gray" style="font-size:11px;padding:4px 12px;">Hold Review</button>
+                </div>
+              </div>
+              <div class="retrieval-row">
+                <span style="font-size:16px;">✅</span>
+                <span class="retrieval-label">Transition to Walking Aid</span>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button>
+                  <button class="btn btn-success" style="font-size:11px;padding:4px 12px;">Schedule Pickup</button>
+                </div>
+              </div>
+              <div class="retrieval-row">
+                <span style="font-size:16px;">❌</span>
+                <span class="retrieval-label">Case Closure</span>
+                <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button>
+              </div>
+              <div class="retrieval-row" style="border-bottom:none;">
+                <span style="font-size:16px;">❌</span>
+                <span class="retrieval-label">No Update (60 Days)</span>
+                <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sec-header sec-teal">Refurbishment &amp; Reallocation</div>
+            <table>
+              <thead class="realloc-head">
+                <tr><th>Equipment Retrieved</th><th>Safety Inspection</th><th>Refurbished &amp; Certified</th><th>Certified to New OB</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>10 April 2026</td>
+                  <td><span style="color:#2e7d32;font-weight:600;">✅ Inspection Complete</span></td>
+                  <td><span style="color:#1976d2;font-weight:600;">Certified for Use</span></td>
+                  <td><button class="btn btn-success" style="font-size:11px;">Allocate Now</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="sec-header sec-green">Sustainability Impact</div>
+            <div class="card-body">
+              <div class="impact-item">
+                <div class="impact-icon" style="background:#2e7d32;">♻</div>
+                <div><div class="impact-lbl">Plastic Waste Reduced</div><div class="impact-val" style="color:#2e7d32;">1,250 kg</div></div>
+              </div>
+              <div class="impact-item">
+                <div class="impact-icon" style="background:#1565c0;">$</div>
+                <div><div class="impact-lbl">Procurement Savings</div><div class="impact-val" style="color:#1565c0;">RM 150,000</div></div>
+              </div>
+              <div class="impact-item" style="margin-bottom:0;">
+                <div class="impact-icon" style="background:#00796b;">🔄</div>
+                <div><div class="impact-lbl">Units Reallocated</div><div class="impact-val" style="color:#00796b;">85 units</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-blue">Zone Quick View</div>
+            <div style="padding:10px 14px;">
+              <div id="zone-quick-view"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROVISION -->
+    <div id="page-provision" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div class="card">
+        <div class="sec-header sec-blue">OB Medical Aid Provision — Medical Aid Lifecycle</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Filter:</span>
+          <select id="provision-zone-filter" onchange="renderProvisionTable()">
+            <option>All</option><option>Central</option><option>North</option><option>East Coast</option>
+          </select>
+          <select id="provision-aid-filter" onchange="renderProvisionTable()">
+            <option>All</option><option>Wheelchair</option><option>Oxygen Concentrator</option><option>Hospital Bed</option><option>Hoist</option>
+          </select>
+          <span id="provision-count" style="margin-left:auto;font-size:12px;color:#607080;"></span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="provision-table">
+            <thead>
+              <tr><th>OB ID</th><th>Name</th><th>Medical Aid</th><th>Zone / Office</th><th>Issued</th><th>Duration</th><th>Status</th><th>AI Prediction</th><th>Retrieval Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="provision-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKETPLACE -->
+    <div id="page-marketplace" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div class="card">
+        <div class="sec-header sec-teal">Medical Aid Marketplace — Zone-Based Redistribution</div>
+        <div class="info-bar">📍 Showing aids available for redistribution. Request from nearest zone to minimise transport lag. Refurbished & certified units only.</div>
+        <div class="zone-pills" id="mkt-zone-pills"></div>
+        <div style="padding:8px 16px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #dde6f0;">
+          <span style="font-size:12px;color:#607080;">Aid Type:</span>
+          <select id="mkt-aid-filter" onchange="renderMarketplace()">
+            <option>All</option><option>Wheelchair</option><option>Oxygen Concentrator</option><option>Hospital Bed</option><option>Hoist</option>
+          </select>
+        </div>
+        <div class="mkt-grid" id="mkt-grid"></div>
+      </div>
+    </div>
+
+    <!-- REFURBISHMENT -->
+    <div id="page-refurbishment" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div class="zone-grid" id="refurb-zone-cards"></div>
+      <div class="card">
+        <div class="sec-header sec-teal">Active Refurbishment Jobs</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Zone:</span>
+          <select id="refurb-zone-filter" onchange="renderRefurbTable()">
+            <option>All</option><option>Central</option><option>North</option><option>East Coast</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="teal-head">
+            <thead>
+              <tr><th>Job ID</th><th>Medical Aid</th><th>From Office</th><th>Zone</th><th>Rehab Centre</th><th>Progress</th><th>ETA</th><th>Status</th></tr>
+            </thead>
+            <tbody id="refurb-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="footer">
+    <span>INSPIRE v2.0 · PERKESO Medical Aid Lifecycle Management System</span>
+    <span>Prototype · PILLAR 2025 (Alyaa, Amira &amp; Danial)</span>
+  </div>
+</div>
+
+<script>
+const ZONES = {
+  "Central":    { color:"#1565c0", offices:["Putrajaya","Kuala Lumpur","Shah Alam","Melaka","Muar"], centre:"Pusat Rehab PERKESO Melaka" },
+  "North":      { color:"#00796b", offices:["Ipoh","Penang","Alor Setar"],                          centre:"Pusat Rehab PERKESO Ipoh" },
+  "East Coast": { color:"#e65100", offices:["Kuantan","Kota Bharu","Kuala Terengganu"],             centre:"Pusat Rehab PERKESO Terengganu" }
+};
+
+const AID_ICONS = { "Wheelchair":"♿","Oxygen Concentrator":"💨","Hospital Bed":"🛏","Hoist":"⚙" };
+
+const OBS = [
+  { id:"OB-2025-0091", name:"Adam Bin Azman",          aid:"Wheelchair",          zone:"Central",    office:"Putrajaya",   issued:"15 Feb 2025", status:"Active",    cat:"HUK",  pred:"Temporary",   conf:82,  weeks:54, daysLeft:90  },
+  { id:"OB-2025-0124", name:"Aqilah Binti Jifri",      aid:"Hospital Bed",        zone:"North",      office:"Ipoh",        issued:"10 May 2025", status:"Recovered", cat:"ILAT", pred:"Retrievable", conf:95,  weeks:42, daysLeft:0   },
+  { id:"OB-2025-0203", name:"Rajendran A/L Kumar",     aid:"Oxygen Concentrator", zone:"Central",    office:"Johor Bahru", issued:"20 Nov 2025", status:"Active",    cat:"RTW",  pred:"Permanent",   conf:71,  weeks:68, daysLeft:180 },
+  { id:"OB-2025-0317", name:"Faiqh Aniq Leuw",         aid:"Hoist",               zone:"East Coast", office:"Kuantan",     issued:"01 Aug 2025", status:"Active",    cat:"HUK",  pred:"Temporary",   conf:78,  weeks:30, daysLeft:120 },
+  { id:"OB-2026-0445", name:"Mohd Nabhan Bin Mizan",   aid:"Wheelchair",          zone:"Central",    office:"Melaka",      issued:"12 Jan 2026", status:"Deceased",  cat:"ILAT", pred:"Retrievable", conf:100, weeks:60, daysLeft:0   },
+  { id:"OB-2026-0012", name:"Nurul Ain Binti Affendi", aid:"Hospital Bed",        zone:"East Coast", office:"Terengganu",  issued:"03 Jan 2026", status:"Active",    cat:"RTW",  pred:"Temporary",   conf:88,  weeks:10, daysLeft:270 },
+];
+
+const MKT = [
+  { id:"MKT-001", aid:"Wheelchair",   model:"ACARE Wheel Multilight",            cond:"Good",      zone:"Central",    office:"Petaling Jaya", avail:"10 Mar 2026", ready:true },
+  { id:"MKT-002", aid:"Hospital Bed", model:"HI LO FOWLER BED WITH PU MATRESS", cond:"Excellent", zone:"North",      office:"Ipoh",          avail:"15 Mar 2026", ready:true },
+  { id:"MKT-004", aid:"Wheelchair",   model:"ACARE Wheel Detachable",            cond:"Fair",      zone:"East Coast", office:"Kuantan",       avail:"20 Mar 2026", ready:true },
+  { id:"MKT-005", aid:"Hoist",        model:"Manual Hydraulic Patient Hoist",    cond:"Good",      zone:"Central",    office:"Melaka",        avail:"18 Mar 2026", ready:true },
+];
+
+const REFURB = [
+  { id:"RF-2025-001", aid:"Wheelchair",          from:"Putrajaya",  zone:"Central",    centre:"Pusat Rehab PERKESO Melaka",     step:2, eta:"20 May 2026"  },
+  { id:"RF-2025-002", aid:"Hospital Bed",        from:"Ipoh",       zone:"North",      centre:"Pusat Rehab PERKESO Ipoh",       step:4, eta:"14 May 2026"  },
+  { id:"RF-2025-003", aid:"Oxygen Concentrator", from:"Kota Bharu", zone:"East Coast", centre:"Pusat Rehab PERKESO Terengganu", step:0, eta:"01 June 2026" },
+  { id:"RF-2025-004", aid:"Hoist",               from:"Kuantan",    zone:"East Coast", centre:"Pusat Rehab PERKESO Terengganu", step:2, eta:"25 Mar 2025"  },
+  { id:"RF-2025-005", aid:"Wheelchair",          from:"Melaka",     zone:"Central",    centre:"Pusat Rehab PERKESO Melaka",     step:5, eta:"12 July 2026" },
+];
+const REFURB_STEPS = ["Received","Cleaning","UV Sterilisation","Inspection","Certified","Ready"];
+
+let expandedOB = null;
+let mktZone = "All";
+let requestedMkt = {};
+let refurbZoneFilter = "All";
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-' + el.dataset.page).classList.add('active');
+  });
+});
+
+function pillHtml(label) {
+  const map = { "Active":"active","Recovered":"recovered","Deceased":"deceased","Temporary":"temporary","Permanent":"permanent","Retrievable":"retrievable","Ready":"ready","Certified":"certified","Received":"received","In Progress":"inprogress" };
+  return `<span class="pill pill-${map[label]||'gray'}"><span class="pill-dot"></span>${label}</span>`;
+}
+
+function weekBarHtml(weeks, max=104) {
+  const p = Math.min((weeks/max)*100, 100);
+  const col = p<40?"#43a047":p<70?"#ffa000":"#ef5350";
+  return `<div style="font-size:10px;color:#607080;margin-bottom:3px;">${weeks} wks elapsed</div><div class="prog-wrap"><div class="prog-bar" style="width:${p}%;background:${col};"></div></div>`;
+}
+
+function confBarHtml(val) {
+  const col = val>85?"#2e7d32":val>70?"#1976d2":"#f57f17";
+  return `<div class="conf-wrap"><div class="conf-bar"><div class="conf-fill" style="width:${val}%;background:${col};"></div></div><span style="font-size:11px;font-weight:700;color:${col};min-width:32px;">${val}%</span></div>`;
+}
+
+function stepsHtml(step) {
+  let html = '<div class="steps-row">';
+  REFURB_STEPS.forEach((s, i) => {
+    const cls = i < step ? "step-done" : i === step ? "step-active" : "";
+    html += `<div class="step-circle ${cls}" title="${s}">${i < step ? "✓" : i+1}</div>`;
+    if (i < REFURB_STEPS.length-1) html += `<div class="step-line ${i < step ? "done" : ""}"></div>`;
+  });
+  return html + `</div><div style="font-size:10px;color:#1976d2;font-weight:600;margin-top:3px;">${REFURB_STEPS[step]}</div>`;
+}
+
+function renderProvisionTable() {
+  const zf = document.getElementById('provision-zone-filter').value;
+  const af = document.getElementById('provision-aid-filter').value;
+  const rows = OBS.filter(o => (zf==="All"||o.zone===zf) && (af==="All"||o.aid===af));
+  document.getElementById('provision-count').textContent = rows.length + " records";
+  const tbody = document.getElementById('provision-tbody');
+  tbody.innerHTML = "";
+  rows.forEach(ob => {
+    const isRetrievable = ob.status==="Recovered" || ob.status==="Deceased";
+    const tr = document.createElement('tr');
+    tr.style.cursor = "pointer";
+    tr.innerHTML = `
+      <td style="color:#1976d2;font-weight:600;">${ob.id}</td>
+      <td style="font-weight:600;">${ob.name}</td>
+      <td>${AID_ICONS[ob.aid]||"🩺"} ${ob.aid}</td>
+      <td><div style="font-weight:600;">${ob.zone}</div><div style="color:#607080;font-size:11px;">${ob.office}</div></td>
+      <td style="color:#607080;">${ob.issued}</td>
+      <td style="min-width:130px;">${weekBarHtml(ob.weeks)}</td>
+      <td>${pillHtml(ob.status)}</td>
+      <td>${pillHtml(ob.pred)}</td>
+      <td style="min-width:120px;">${confBarHtml(ob.conf)}</td>
+      <td>${isRetrievable
+        ? `<button class="btn btn-orange" style="font-size:11px;" onclick="triggerRetrieve(this,'${ob.id}')">🔄 Retrieve</button>`
+        : `<button class="btn btn-outline" style="font-size:11px;">Update</button>`}</td>`;
+    tr.addEventListener('click', e => { if(e.target.tagName==="BUTTON") return; toggleExpand(ob); });
+    tbody.appendChild(tr);
+    const expTr = document.createElement('tr');
+    expTr.id = "exp-" + ob.id;
+    expTr.style.display = "none";
+    expTr.innerHTML = `<td colspan="10" style="padding:0 12px 12px;background:#e8f0fe;"><div class="expand-inner">
+      <div class="expand-box"><div class="expand-lbl">Category</div><div class="expand-val">${ob.cat}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Days Remaining</div><div class="expand-val" style="color:${ob.daysLeft===0?"#c62828":"#1a2a3a"};">${ob.daysLeft===0?"⚠ Eligible for Retrieval":ob.daysLeft+" days"}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Rehab Centre (Zone)</div><div class="expand-val" style="font-size:11px;">${ZONES[ob.zone]?.centre||"-"}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Next Review</div><div class="expand-val">15 Apr 2026</div></div>
+    </div></td>`;
+    tbody.appendChild(expTr);
+  });
+}
+
+function toggleExpand(ob) {
+  const expRow = document.getElementById("exp-" + ob.id);
+  if (expandedOB === ob.id) { expRow.style.display = "none"; expandedOB = null; }
+  else { document.querySelectorAll('[id^="exp-"]').forEach(r => r.style.display = "none"); expRow.style.display = ""; expandedOB = ob.id; }
+}
+
+function triggerRetrieve(btn, id) {
+  btn.textContent = "✓ Initiated";
+  btn.classList.remove("btn-orange");
+  btn.classList.add("btn-gray");
+  btn.disabled = true;
+}
+
+function buildMktPills() {
+  const container = document.getElementById('mkt-zone-pills');
+  container.innerHTML = "";
+  ["All", ...Object.keys(ZONES)].forEach(z => {
+    const span = document.createElement('span');
+    span.className = "zone-pill" + (z===mktZone?" active":"");
+    span.textContent = z;
+    span.addEventListener('click', () => { mktZone = z; buildMktPills(); renderMarketplace(); });
+    container.appendChild(span);
+  });
+}
+
+function renderMarketplace() {
+  const af = document.getElementById('mkt-aid-filter').value;
+  const items = MKT.filter(i => (mktZone==="All"||i.zone===mktZone) && (af==="All"||i.aid===af));
+  const grid = document.getElementById('mkt-grid');
+  grid.innerHTML = "";
+  items.forEach(item => {
+    const zc = ZONES[item.zone]?.color || "#1976d2";
+    const req = requestedMkt[item.id];
+    const div = document.createElement('div');
+    div.className = "mkt-card";
+    div.innerHTML = `
+      <div class="mkt-top" style="background:${zc}18;border-bottom:3px solid ${zc};">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span style="font-size:28px;">${AID_ICONS[item.aid]||"🩺"}</span>
+          <div><div style="font-weight:700;font-size:13px;">${item.aid}</div><div style="font-size:11px;color:#607080;">${item.model}</div></div>
+        </div>
+        <div style="background:${item.ready?"#e8f5e9":"#fff8e1"};color:${item.ready?"#2e7d32":"#f57f17"};border-radius:12px;padding:3px 10px;font-size:10px;font-weight:700;">${item.ready?"✅ Ready":"⏳ Pending Refurb"}</div>
+      </div>
+      <div class="mkt-body">
+        <div class="mkt-meta">
+          <div class="mkt-meta-item"><div class="ml">Zone</div><div class="mv" style="color:${zc};">${item.zone}</div></div>
+          <div class="mkt-meta-item"><div class="ml">Office</div><div class="mv">${item.office}</div></div>
+          <div class="mkt-meta-item"><div class="ml">Condition</div><div class="mv">${item.cond}</div></div>
+          <div class="mkt-meta-item"><div class="ml">Available</div><div class="mv">${item.avail}</div></div>
+        </div>
+        ${item.ready
+          ? `<button class="btn ${req?"btn-gray":"btn-success"}" style="width:100%;text-align:center;" id="mkt-btn-${item.id}" onclick="requestMkt('${item.id}','${item.office}')">${req?"✓ Request Submitted":"📦 Request for OB"}</button>`
+          : `<div style="background:#f5f5f5;border-radius:5px;padding:7px 12px;text-align:center;font-size:12px;color:#607080;">Awaiting Refurbishment Clearance</div>`}
+        <div id="mkt-confirm-${item.id}" class="confirm-box" style="display:${req?"block":"none"};">✅ Request sent to ${item.office}. Nearest zone delivery arranged. Est. 2–5 working days.</div>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+function requestMkt(id, office) {
+  requestedMkt[id] = true;
+  const btn = document.getElementById("mkt-btn-"+id);
+  if (btn) { btn.textContent = "✓ Request Submitted"; btn.classList.remove("btn-success"); btn.classList.add("btn-gray"); btn.disabled = true; }
+  const conf = document.getElementById("mkt-confirm-"+id);
+  if (conf) conf.style.display = "block";
+}
+
+function renderRefurbZoneCards() {
+  const container = document.getElementById('refurb-zone-cards');
+  container.innerHTML = "";
+  Object.entries(ZONES).forEach(([zone, d]) => {
+    const jobs = REFURB.filter(j => j.zone===zone);
+    const ready = jobs.filter(j => j.step===5).length;
+    const inprog = jobs.filter(j => j.step<5).length;
+    const isActive = refurbZoneFilter===zone;
+    const div = document.createElement('div');
+    div.className = "zone-card" + (isActive?" active":"");
+    div.style.borderColor = isActive ? d.color : "#dde6f0";
+    div.style.background = isActive ? d.color+"12" : "#fff";
+    div.innerHTML = `
+      <div class="zone-card-title"><div class="zone-dot" style="background:${d.color};"></div>${zone} Zone</div>
+      <div class="zone-centre">🏥 ${d.centre}</div>
+      <div class="zone-counts">
+        <div class="zone-count-box" style="background:#fff8e1;"><div class="zone-count-val" style="color:#ffa000;">${inprog}</div><div class="zone-count-lbl">In Progress</div></div>
+        <div class="zone-count-box" style="background:#e8f5e9;"><div class="zone-count-val" style="color:#2e7d32;">${ready}</div><div class="zone-count-lbl">Ready</div></div>
+      </div>`;
+    div.addEventListener('click', () => {
+      refurbZoneFilter = isActive ? "All" : zone;
+      document.getElementById('refurb-zone-filter').value = refurbZoneFilter;
+      renderRefurbZoneCards(); renderRefurbTable();
+    });
+    container.appendChild(div);
+  });
+}
+
+function renderRefurbTable() {
+  const zf = document.getElementById('refurb-zone-filter').value;
+  refurbZoneFilter = zf;
+  renderRefurbZoneCards();
+  const rows = REFURB.filter(j => zf==="All" || j.zone===zf);
+  const tbody = document.getElementById('refurb-tbody');
+  tbody.innerHTML = "";
+  const statusLabel = s => s===5?"Ready":s>=3?"Certified":s>=1?"In Progress":"Received";
+  rows.forEach(job => {
+    const zc = ZONES[job.zone]?.color || "#1976d2";
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#1976d2;font-weight:600;">${job.id}</td>
+      <td>${AID_ICONS[job.aid]||"🩺"} ${job.aid}</td>
+      <td>${job.from}</td>
+      <td><span class="pill-zone" style="background:${zc}18;color:${zc};">${job.zone}</span></td>
+      <td style="font-size:11px;color:#607080;">🏥 ${job.centre}</td>
+      <td style="min-width:260px;">${stepsHtml(job.step)}</td>
+      <td style="color:#607080;">${job.eta}</td>
+      <td>${pillHtml(statusLabel(job.step))}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function buildZoneQuickView() {
+  const container = document.getElementById('zone-quick-view');
+  if (!container) return;
+  container.innerHTML = Object.entries(ZONES).map(([zone, d]) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f4f8;font-size:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:9px;height:9px;border-radius:50%;background:${d.color};"></div>
+        <span style="font-weight:500;">${zone}</span>
+      </div>
+      <span style="color:#607080;">${d.offices.length} offices</span>
+    </div>`).join("");
+}
+
+buildZoneQuickView();
+renderProvisionTable();
+buildMktPills();
+renderMarketplace();
+renderRefurbZoneCards();
+renderRefurbTable();
+</script>
+</body>
+</html>
