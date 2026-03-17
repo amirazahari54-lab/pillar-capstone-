@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSPIRE – Lifecycle Monitoring & Retrieval Management</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Calibri, sans-serif; background: #f0f4f8; color: #1a2a3a; display: flex; min-height: 100vh; }
+
+  #sidebar { width: 215px; min-width: 215px; background: #1a3a6b; display: flex; flex-direction: column; min-height: 100vh; }
+  .sidebar-logo { padding: 16px; border-bottom: 1px solid #2a5298; display: flex; align-items: center; gap: 10px; }
+  .logo-box { background: linear-gradient(135deg,#42a5f5,#1565c0); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 18px; }
+  .logo-name { color: #fff; font-weight: 800; font-size: 15px; letter-spacing: 1px; }
+  .logo-sub  { color: #7eaee0; font-size: 9px; letter-spacing: 1.5px; }
+  nav { flex: 1; padding: 8px 0; }
+  .nav-section { padding: 6px 16px 3px; font-size: 9px; letter-spacing: 1.8px; color: #4a6fa5; text-transform: uppercase; font-weight: 700; margin-top: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; color: #cce0ff; font-size: 12.5px; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); }
+  .nav-item.active { background: linear-gradient(90deg,#1976d2,rgba(21,101,192,0.8)); border-left: 3px solid #42a5f5; color: #fff; font-weight: 700; }
+  .nav-icon { font-size: 14px; }
+  .nav-badge { margin-left: auto; border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: 700; }
+  .badge-red    { background: #ef5350; color: #fff; }
+  .badge-yellow { background: #ffa000; color: #fff; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid #2a5298; font-size: 11px; color: #7eaee0; }
+  .sidebar-footer span { color: #42a5f5; font-weight: 600; display: block; }
+
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topbar { background: linear-gradient(135deg,#1e4080,#1565c0); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; }
+  .topbar-title { color: #fff; font-weight: 700; font-size: 15px; }
+  .topbar-right { display: flex; align-items: center; gap: 20px; color: #cce0ff; font-size: 13px; }
+  .topbar-right strong { color: #fff; }
+  #content { flex: 1; padding: 20px 24px; overflow-y: auto; }
+  #footer { background: #fff; border-top: 1px solid #dde6f0; padding: 8px 24px; font-size: 11px; color: #607080; display: flex; justify-content: space-between; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── STAT CARDS ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-grid-6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { border-radius: 10px; padding: 16px 18px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .stat-card .s-label { font-size: 11px; opacity: .85; font-weight: 500; }
+  .stat-card .s-val   { font-size: 30px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
+  .stat-card .s-val-sm{ font-size: 20px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
+  .stat-card .s-sub   { font-size: 11px; opacity: .75; margin-top: 3px; }
+  .stat-blue   { background: linear-gradient(135deg,#1e88e5,#1565c0); }
+  .stat-teal   { background: linear-gradient(135deg,#00acc1,#00796b); }
+  .stat-orange { background: linear-gradient(135deg,#fb8c00,#e65100); }
+  .stat-green  { background: linear-gradient(135deg,#43a047,#2e7d32); }
+  .stat-red    { background: linear-gradient(135deg,#ef5350,#c62828); }
+  .stat-yellow { background: linear-gradient(135deg,#ffa000,#e65100); }
+  .stat-lime   { background: linear-gradient(135deg,#66bb6a,#2e7d32); }
+  .stat-purple { background: linear-gradient(135deg,#7c4dff,#4527a0); }
+
+  /* ── CARDS ── */
+  .card { background: #fff; border: 1px solid #dde6f0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; margin-bottom: 14px; }
+  .sec-header { padding: 8px 16px; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.3px; display: flex; align-items: center; justify-content: space-between; }
+  .sec-blue   { background: linear-gradient(90deg,#1565c0,rgba(21,101,192,0.87)); }
+  .sec-teal   { background: linear-gradient(90deg,#00796b,rgba(0,121,107,0.87)); }
+  .sec-green  { background: linear-gradient(90deg,#2e7d32,rgba(46,125,50,0.87)); }
+  .sec-red    { background: linear-gradient(90deg,#c62828,rgba(198,40,40,0.87)); }
+  .card-body  { padding: 14px 16px; }
+
+  /* ── PILLS ── */
+  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .pill-active     { background:#e8f5e9; color:#2e7d32; } .pill-active .pill-dot     { background:#43a047; }
+  .pill-recovered  { background:#fff8e1; color:#f57f17; } .pill-recovered .pill-dot  { background:#ffa000; }
+  .pill-deceased   { background:#ffebee; color:#c62828; } .pill-deceased .pill-dot   { background:#ef5350; }
+  .pill-temporary  { background:#e3f2fd; color:#1565c0; } .pill-temporary .pill-dot  { background:#1976d2; }
+  .pill-permanent  { background:#ede7f6; color:#4527a0; } .pill-permanent .pill-dot  { background:#7c4dff; }
+  .pill-retrievable{ background:#fff3e0; color:#e65100; } .pill-retrievable .pill-dot{ background:#fb8c00; }
+  .pill-ready      { background:#e8f5e9; color:#2e7d32; } .pill-ready .pill-dot      { background:#43a047; }
+  .pill-certified  { background:#e3f2fd; color:#1565c0; } .pill-certified .pill-dot  { background:#1976d2; }
+  .pill-received   { background:#f3e5f5; color:#6a1b9a; } .pill-received .pill-dot   { background:#ab47bc; }
+  .pill-inprogress { background:#fff8e1; color:#f57f17; } .pill-inprogress .pill-dot { background:#ffa000; }
+  .pill-zone { border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+
+  /* ── TRAFFIC LIGHT PILLS ── */
+  .tl-red    { background:#ffebee; color:#c62828; border:1.5px solid #ef9a9a; }
+  .tl-yellow { background:#fff8e1; color:#f57f17; border:1.5px solid #ffe082; }
+  .tl-green  { background:#e8f5e9; color:#2e7d32; border:1.5px solid #a5d6a7; }
+  .tl-dot-red    { background:#ef5350; }
+  .tl-dot-yellow { background:#ffa000; }
+  .tl-dot-green  { background:#43a047; }
+
+  /* ── BUTTONS ── */
+  .btn { border-radius: 4px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-primary  { background: #1976d2; color: #fff; }
+  .btn-success  { background: #2e7d32; color: #fff; }
+  .btn-orange   { background: #fb8c00; color: #fff; }
+  .btn-red      { background: #c62828; color: #fff; }
+  .btn-outline  { background: transparent; color: #1976d2; border: 1px solid #1976d2 !important; }
+  .btn-gray     { background: #90a4ae; color: #fff; }
+  .btn:hover    { opacity: .88; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: #e8f0fe; }
+  th { padding: 9px 12px; text-align: left; font-weight: 700; font-size: 11px; border-bottom: 1px solid #dde6f0; color: #1a2a3a; }
+  td { padding: 9px 12px; border-bottom: 1px solid #dde6f0; vertical-align: middle; }
+  tbody tr:nth-child(even) { background: #fafcff; }
+  tbody tr:hover { background: #e8f0fe; }
+  .teal-head thead tr { background: #e0f7f4; }
+  .red-head thead tr { background: #ffebee; }
+
+  /* ── PROGRESS ── */
+  .prog-wrap { background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden; }
+  .prog-bar  { height: 100%; border-radius: 4px; }
+  .conf-wrap { display: flex; align-items: center; gap: 8px; }
+  .conf-bar  { flex: 1; background: #e0e0e0; border-radius: 4px; height: 7px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 4px; }
+
+  /* ── REFURB STEPS ── */
+  .steps-row { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .step-circle { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; border: 2px solid #bdbdbd; background: #e0e0e0; color: #9e9e9e; }
+  .step-done   { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+  .step-active { background: #1976d2; border-color: #1976d2; color: #fff; }
+  .step-line   { width: 10px; height: 2px; background: #e0e0e0; }
+  .step-line.done { background: #2e7d32; }
+
+  /* ── DASHBOARD ── */
+  .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+  .patient-bar { display: flex; gap: 8px; margin-bottom: 2px; }
+  .patient-bar .pb-fill { flex: 1; height: 8px; border-radius: 2px; }
+  .impact-item { display: flex; align-items: center; gap: 12px; background: #f5f9ff; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .impact-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 800; }
+  .impact-val  { font-size: 18px; font-weight: 800; }
+  .impact-lbl  { font-size: 11px; color: #607080; }
+
+  /* ── ZONE CARDS ── */
+  .zone-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
+  .zone-card { border: 2px solid #dde6f0; border-radius: 8px; padding: 12px 16px; cursor: pointer; transition: all 0.15s; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .zone-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+  .zone-card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .zone-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .zone-centre { font-size: 11px; color: #607080; margin-bottom: 10px; }
+  .zone-counts { display: flex; gap: 8px; }
+  .zone-count-box { flex: 1; border-radius: 6px; padding: 6px; text-align: center; }
+  .zone-count-val { font-size: 18px; font-weight: 800; }
+  .zone-count-lbl { font-size: 10px; color: #607080; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar { padding: 10px 16px; background: #f5f9ff; border-bottom: 1px solid #dde6f0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .filter-bar select, .filter-bar input { border: 1px solid #dde6f0; border-radius: 5px; padding: 6px 10px; font-size: 12px; color: #1a2a3a; background: #fff; }
+  .zone-pills { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 16px; background: #f5f9ff; border-bottom: 1px solid #dde6f0; align-items: center; }
+  .zone-pill { border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid #dde6f0; background: #fff; color: #1a2a3a; transition: all 0.15s; }
+  .zone-pill.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+
+  /* ── EXPAND ROW ── */
+  .expand-inner { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 12px; }
+  .expand-box { background: #fff; border-radius: 6px; padding: 10px 14px; border: 1px solid #dde6f0; }
+  .expand-lbl { font-size: 10px; color: #607080; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .expand-val { font-size: 12px; font-weight: 700; }
+
+  .info-bar { padding: 8px 16px; background: #e0f7f4; font-size: 12px; color: #004d40; display: flex; gap: 8px; align-items: center; }
+  .warn-bar { padding: 8px 16px; background: #fff8e1; font-size: 12px; color: #6d4c00; display: flex; gap: 8px; align-items: center; }
+
+  .retrieval-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f4f8; }
+  .retrieval-label { flex: 1; font-size: 13px; font-weight: 500; }
+  .realloc-head { background: #f5f9ff; }
+
+  /* ══════════════════════════════
+     TRAFFIC LIGHT SYSTEM STYLES
+  ══════════════════════════════ */
+  .tl-legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 10px 16px; background: #fafcff; border-bottom: 1px solid #dde6f0; font-size: 11px; }
+  .tl-legend-item { display: flex; align-items: center; gap: 6px; }
+  .tl-light { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.15); flex-shrink: 0; }
+  .tl-light-red    { background: #ef5350; box-shadow: 0 0 6px rgba(239,83,80,0.6); }
+  .tl-light-yellow { background: #ffa000; box-shadow: 0 0 6px rgba(255,160,0,0.5); }
+  .tl-light-green  { background: #43a047; box-shadow: 0 0 6px rgba(67,160,71,0.5); }
+
+  .alert-row-red    { border-left: 4px solid #ef5350; background: #fff5f5 !important; }
+  .alert-row-yellow { border-left: 4px solid #ffa000; background: #fffbf0 !important; }
+  .alert-row-green  { border-left: 4px solid #43a047; background: #f5fff6 !important; }
+
+  .tl-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .tl-pill-red    { background:#ffebee; color:#c62828; border:1.5px solid #ffcdd2; }
+  .tl-pill-yellow { background:#fff8e1; color:#e65100; border:1.5px solid #ffe082; }
+  .tl-pill-green  { background:#e8f5e9; color:#2e7d32; border:1.5px solid #c8e6c9; }
+
+  .alert-count-box { display: flex; gap: 10px; padding: 10px 16px; background: #fff; border-bottom: 1px solid #dde6f0; }
+  .alert-count-item { display: flex; align-items: center; gap: 8px; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; }
+  .alert-count-item span { font-size: 22px; font-weight: 800; }
+  .aci-red    { background:#ffebee; color:#c62828; }
+  .aci-yellow { background:#fff8e1; color:#e65100; }
+  .aci-green  { background:#e8f5e9; color:#2e7d32; }
+
+  .action-log { margin-top: 6px; background: #f5f9ff; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #1a2a3a; display: none; }
+  .action-log.show { display: block; }
+
+  /* ══════════════════════════════
+     SUSTAINABILITY STYLES
+  ══════════════════════════════ */
+  .sustain-hero { background: linear-gradient(135deg,#1b5e20,#2e7d32,#00695c); border-radius: 10px; padding: 20px 24px; color: #fff; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .sustain-hero::before { content:''; position:absolute; top:-30px; right:-30px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.06); }
+  .sustain-hero::after  { content:''; position:absolute; bottom:-40px; right:60px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.04); }
+  .sustain-hero-title   { font-size:16px; font-weight:800; letter-spacing:0.5px; margin-bottom:4px; }
+  .sustain-hero-sub     { font-size:11px; opacity:.8; margin-bottom:14px; }
+  .sustain-hero-stats   { display:flex; gap:20px; flex-wrap:wrap; }
+  .sustain-hero-stat    { background:rgba(255,255,255,0.12); border-radius:8px; padding:10px 16px; text-align:center; min-width:110px; }
+  .sustain-hero-val     { font-size:22px; font-weight:800; }
+  .sustain-hero-lbl     { font-size:10px; opacity:.8; margin-top:2px; }
+
+  .sustain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .sustain-aid-card { border: 1px solid #dde6f0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); background: #fff; }
+  .sustain-aid-header { padding: 10px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #e8f5e9; background: linear-gradient(90deg,#e8f5e9,#f1f8e9); }
+  .sustain-aid-icon { font-size: 26px; }
+  .sustain-aid-name { font-weight: 700; font-size: 13px; }
+  .sustain-aid-meta { font-size: 10px; color: #607080; margin-top: 2px; }
+  .sustain-aid-body { padding: 12px 14px; }
+  .sustain-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .sustain-metric { background: #f5f9ff; border-radius: 6px; padding: 8px 10px; text-align: center; }
+  .sustain-metric-icon { font-size: 16px; margin-bottom: 3px; }
+  .sustain-metric-val  { font-size: 14px; font-weight: 800; color: #1a2a3a; }
+  .sustain-metric-lbl  { font-size: 9px; color: #607080; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+  .sustain-route { background: #e8f5e9; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #1b5e20; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .sustain-units-bar { margin-top: 8px; }
+  .sustain-units-label { display: flex; justify-content: space-between; font-size: 10px; color: #607080; margin-bottom: 3px; }
+  .sustain-bar-wrap { background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden; }
+  .sustain-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#43a047,#2e7d32); }
+  .mfr-tag { display:inline-block; background:#e3f2fd; color:#1565c0; border-radius:4px; padding:2px 8px; font-size:10px; font-weight:600; margin-right:4px; margin-bottom:4px; }
+  .supplier-tag { display:inline-block; background:#f3e5f5; color:#6a1b9a; border-radius:4px; padding:2px 8px; font-size:10px; font-weight:600; margin-right:4px; margin-bottom:4px; }
+
+  .sustain-timeline { display: flex; gap: 0; margin: 14px 0; position: relative; }
+  .sustain-timeline::before { content:''; position:absolute; top:16px; left:16px; right:16px; height:2px; background:#e0e0e0; z-index:0; }
+  .st-node { flex: 1; text-align: center; position: relative; z-index: 1; }
+  .st-circle { width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid #e0e0e0; background: #fff; }
+  .st-active { border-color: #2e7d32; background: #e8f5e9; }
+  .st-label { font-size: 9px; color: #607080; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── DASHBOARD ALERT MINI CARDS ── */
+  .dash-alert-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+  .dash-alert-card { border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.1s; }
+  .dash-alert-card:hover { transform: translateY(-1px); }
+  .dash-alert-card .dac-light { width: 18px; height: 18px; border-radius: 50%; flex-shrink:0; }
+  .dac-red    { background: #ffebee; border: 1.5px solid #ffcdd2; }
+  .dac-yellow { background: #fff8e1; border: 1.5px solid #ffe082; }
+  .dac-green  { background: #e8f5e9; border: 1.5px solid #c8e6c9; }
+  .dac-light-red    { background: #ef5350; box-shadow: 0 0 8px rgba(239,83,80,0.7); }
+  .dac-light-yellow { background: #ffa000; box-shadow: 0 0 8px rgba(255,160,0,0.6); }
+  .dac-light-green  { background: #43a047; box-shadow: 0 0 8px rgba(67,160,71,0.6); }
+  .dac-count { font-size: 24px; font-weight: 800; }
+  .dac-count-red    { color: #c62828; }
+  .dac-count-yellow { color: #e65100; }
+  .dac-count-green  { color: #2e7d32; }
+  .dac-label { font-size: 11px; font-weight: 600; color: #1a2a3a; margin-top: 2px; }
+  .dac-sub   { font-size: 10px; color: #607080; }
+
+  /* ── FILTER TABS ── */
+  .filter-tabs { display: flex; gap: 4px; padding: 10px 16px; background: #f5f9ff; border-bottom: 1px solid #dde6f0; flex-wrap: wrap; }
+  .filter-tab { border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px solid #dde6f0; background: #fff; color: #607080; transition: all 0.15s; }
+  .filter-tab.active-red    { background:#ffebee; color:#c62828; border-color:#ffcdd2; }
+  .filter-tab.active-yellow { background:#fff8e1; color:#e65100; border-color:#ffe082; }
+  .filter-tab.active-green  { background:#e8f5e9; color:#2e7d32; border-color:#c8e6c9; }
+  .filter-tab.active-all    { background:#e3f2fd; color:#1565c0; border-color:#90caf9; }
+  .filter-tab:hover { opacity:.8; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-box">i</div>
+    <div>
+      <div class="logo-name">INSPIRE</div>
+      <div class="logo-sub">LIFECYCLE MGMT</div>
+    </div>
+  </div>
+  <nav id="nav">
+    <div class="nav-section">Core</div>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item" data-page="provision"><span class="nav-icon">📋</span> Medical Aid Provision</div>
+    <div class="nav-item" data-page="refurbishment"><span class="nav-icon">🔧</span> Refurbishment Status</div>
+    <div class="nav-section">Monitoring</div>
+    <div class="nav-item" data-page="retrieval-alerts"><span class="nav-icon">🚦</span> Retrieval Alerts <span class="nav-badge badge-red" id="badge-red">4</span></div>
+    <div class="nav-section">Reports</div>
+    <div class="nav-item" data-page="sustainability"><span class="nav-icon">🌿</span> Sustainability Tracker</div>
+  </nav>
+  <div class="sidebar-footer">Case Manager<span>PP Putrajaya Office</span></div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title">Lifecycle Monitoring &amp; Retrieval Management</div>
+    <div class="topbar-right">
+      <strong>Case Manager</strong>
+      <span>Notifications</span>
+      <span>Settings</span>
+      <span>🔔</span>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ═══════════════════════════════════════════
+         DASHBOARD
+    ═══════════════════════════════════════════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | HUS | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+
+      <!-- Retrieval Alert Summary Cards -->
+      <div style="font-size:12px;font-weight:700;color:#607080;margin-bottom:8px;letter-spacing:0.5px;">🚦 RETRIEVAL ALERT OVERVIEW — TRAFFIC LIGHT STATUS</div>
+      <div class="dash-alert-grid">
+        <div class="dash-alert-card dac-red" onclick="navTo('retrieval-alerts','red')">
+          <div class="dac-light dac-light-red"></div>
+          <div>
+            <div class="dac-count dac-count-red">4</div>
+            <div class="dac-label">🔴 Red — Urgent Action</div>
+            <div class="dac-sub">Deceased / 60+ day no update / overdue</div>
+          </div>
+        </div>
+        <div class="dash-alert-card dac-yellow" onclick="navTo('retrieval-alerts','yellow')">
+          <div class="dac-light dac-light-yellow"></div>
+          <div>
+            <div class="dac-count dac-count-yellow">1</div>
+            <div class="dac-label">🟡 Yellow — Close Supervision</div>
+            <div class="dac-sub">Review due within 30 days</div>
+          </div>
+        </div>
+        <div class="dash-alert-card dac-green" onclick="navTo('retrieval-alerts','green')">
+          <div class="dac-light dac-light-green"></div>
+          <div>
+            <div class="dac-count dac-count-green">1</div>
+            <div class="dac-label">🟢 Green — On Track</div>
+            <div class="dac-sub">New / &gt;3 months remaining</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sustainability Mini Summary -->
+      <div class="card" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1px solid #c8e6c9;">
+        <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:32px;">🌿</div>
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#1b5e20;">Sustainability Impact This Year</div>
+              <div style="font-size:11px;color:#388e3c;">Across all refurbished &amp; reallocated medical aids</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#2e7d32;">2,847 kg</div><div style="font-size:10px;color:#607080;">CO₂ Saved</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#00796b;">1,250 kg</div><div style="font-size:10px;color:#607080;">Waste Avoided</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#1565c0;">RM 150,000</div><div style="font-size:10px;color:#607080;">Procurement Saved</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#6a1b9a;">85 units</div><div style="font-size:10px;color:#607080;">Reallocated</div></div>
+          </div>
+          <button class="btn btn-success" style="font-size:11px;" onclick="navTo('sustainability','')">View Full Report →</button>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div>
+          <div class="card">
+            <div class="sec-header sec-blue">OB Overview</div>
+            <div class="card-body">
+              <div style="font-size:13px;margin-bottom:12px;">
+                <strong style="font-size:15px;">Adam Bin Azman</strong>
+                <span style="color:#607080;margin:0 10px;">|</span>
+                <span style="color:#607080;">Case ID: </span><strong>18736160</strong>
+                <span style="color:#607080;margin:0 10px;">|</span>
+                <span style="color:#607080;">Category: </span><strong style="color:#1976d2;">RTW (Return to Work)</strong>
+              </div>
+              <div style="background:#f5f9ff;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:14px;">
+                <div style="font-size:40px;">♿</div>
+                <div style="flex:1;">
+                  <div style="font-size:13px;">
+                    <span style="color:#607080;">Current Aid: </span><strong>Wheelchair</strong>
+                    <span style="color:#607080;margin:0 12px;">|</span>
+                    <span style="color:#607080;">Issued: </span><strong>15 Feb 2026</strong>
+                    <span style="color:#607080;margin:0 12px;">|</span>
+                    <span style="color:#607080;">Status: </span><strong style="color:#2e7d32;">Temporary</strong>
+                  </div>
+                  <div class="patient-bar" style="margin-top:8px;">
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.7;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.85;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.55;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.9;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.4;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.65;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.8;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.5;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-blue">Status &amp; Prediction</div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px;">
+                <span style="font-weight:600;">Monthly Verification:</span>
+                <span class="pill pill-active"><span class="pill-dot"></span>Active</span>
+                <span style="color:#607080;">| Next Review:</span>
+                <strong style="color:#1976d2;">15 May 2026</strong>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;flex-wrap:wrap;">
+                <span style="font-weight:600;">Prediction:</span>
+                <span style="color:#fb8c00;font-weight:700;">Temporary Aid</span>
+                <span style="color:#607080;">|</span>
+                <span style="color:#607080;">Review in 2 Months</span>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-outline">Override Status</button>
+                <button class="btn btn-success">Update Progress</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-teal">Retrieval Alerts</div>
+            <div class="card-body">
+              <div class="retrieval-row"><span style="font-size:16px;">✅</span><span class="retrieval-label">Recovery Confirmed</span><div style="display:flex;gap:6px;"><button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button><button class="btn btn-success" style="font-size:11px;padding:4px 12px;">Schedule Pickup</button><button class="btn btn-gray" style="font-size:11px;padding:4px 12px;">Hold Review</button></div></div>
+              <div class="retrieval-row"><span style="font-size:16px;">✅</span><span class="retrieval-label">Transition to Walking Aid</span><div style="display:flex;gap:6px;"><button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button><button class="btn btn-success" style="font-size:11px;padding:4px 12px;">Schedule Pickup</button></div></div>
+              <div class="retrieval-row"><span style="font-size:16px;">❌</span><span class="retrieval-label">Case Closure</span><button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button></div>
+              <div class="retrieval-row" style="border-bottom:none;"><span style="font-size:16px;">❌</span><span class="retrieval-label">No Update (60 Days)</span><button class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Retrieve</button></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-teal">Refurbishment &amp; Reallocation</div>
+            <table><thead class="realloc-head"><tr><th>Equipment Retrieved</th><th>Safety Inspection</th><th>Refurbished &amp; Certified</th><th>Certified to New OB</th></tr></thead>
+            <tbody><tr><td>10 April 2026</td><td><span style="color:#2e7d32;font-weight:600;">✅ Inspection Complete</span></td><td><span style="color:#1976d2;font-weight:600;">Certified for Use</span></td><td><button class="btn btn-success" style="font-size:11px;">Allocate Now</button></td></tr></tbody></table>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="sec-header sec-green">Sustainability Impact</div>
+            <div class="card-body">
+              <div class="impact-item"><div class="impact-icon" style="background:#2e7d32;">♻</div><div><div class="impact-lbl">Plastic Waste Reduced</div><div class="impact-val" style="color:#2e7d32;">1,250 kg</div></div></div>
+              <div class="impact-item"><div class="impact-icon" style="background:#1565c0;">$</div><div><div class="impact-lbl">Procurement Savings</div><div class="impact-val" style="color:#1565c0;">RM 150,000</div></div></div>
+              <div class="impact-item" style="margin-bottom:0;"><div class="impact-icon" style="background:#00796b;">🔄</div><div><div class="impact-lbl">Units Reallocated</div><div class="impact-val" style="color:#00796b;">85 units</div></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-blue">Zone Quick View</div>
+            <div style="padding:10px 14px;"><div id="zone-quick-view"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MEDICAL AID PROVISION
+    ═══════════════════════════════════════════ -->
+    <div id="page-provision" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | HUS | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div class="card">
+        <div class="sec-header sec-blue">OB Medical Aid Provision — Medical Aid Lifecycle</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Filter:</span>
+          <select id="provision-zone-filter" onchange="renderProvisionTable()"><option>All</option><option>Central</option><option>North</option><option>East Coast</option></select>
+          <select id="provision-aid-filter" onchange="renderProvisionTable()"><option>All</option><option>Wheelchair</option><option>Oxygen Concentrator</option><option>Hospital Bed</option><option>Hoist</option><option>Commode</option><option>Crutches</option></select>
+          <span id="provision-count" style="margin-left:auto;font-size:12px;color:#607080;"></span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="provision-table">
+            <thead><tr><th>OB ID</th><th>Name</th><th>Medical Aid</th><th>Zone / Office</th><th>Issued</th><th>Duration</th><th>Status</th><th>AI Prediction</th><th>Retrieval Status</th><th>Action</th></tr></thead>
+            <tbody id="provision-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         REFURBISHMENT STATUS
+    ═══════════════════════════════════════════ -->
+    <div id="page-refurbishment" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | HUS | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div class="zone-grid" id="refurb-zone-cards"></div>
+      <div class="card">
+        <div class="sec-header sec-teal">Active Refurbishment Jobs</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Zone:</span>
+          <select id="refurb-zone-filter" onchange="renderRefurbTable()"><option>All</option><option>Central</option><option>North</option><option>East Coast</option></select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="teal-head">
+            <thead><tr><th>Job ID</th><th>Medical Aid</th><th>From Office</th><th>Zone</th><th>Rehab Centre</th><th>Progress</th><th>ETA</th><th>Status</th></tr></thead>
+            <tbody id="refurb-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         🚦 RETRIEVAL ALERTS — TRAFFIC LIGHT SYSTEM
+    ═══════════════════════════════════════════ -->
+    <div id="page-retrieval-alerts" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-red"><div class="s-label">🔴 Red — Urgent</div><div class="s-val" id="tl-count-red">4</div><div class="s-sub">Immediate case manager action</div></div>
+        <div class="stat-card stat-yellow"><div class="s-label">🟡 Yellow — Supervise</div><div class="s-val" id="tl-count-yellow">1</div><div class="s-sub">Review due within 30 days</div></div>
+        <div class="stat-card stat-lime"><div class="s-label">🟢 Green — On Track</div><div class="s-val" id="tl-count-green">1</div><div class="s-sub">New OB / &gt;3 months remaining</div></div>
+        <div class="stat-card stat-blue"><div class="s-label">Total Active OBs Monitored</div><div class="s-val">6</div><div class="s-sub">All zones</div></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-header sec-red">🚦 Retrieval Alert — Traffic Light System</div>
+
+        <!-- Legend -->
+        <div class="tl-legend">
+          <strong style="font-size:11px;color:#1a2a3a;">LEGEND:</strong>
+          <div class="tl-legend-item"><div class="tl-light tl-light-red"></div><strong style="color:#c62828;">RED</strong> — Case manager MUST contact OB immediately. Triggers: deceased, case closed, 60+ days no update, aid overdue for return, review date passed with no action.</div>
+          <div class="tl-legend-item"><div class="tl-light tl-light-yellow"></div><strong style="color:#e65100;">YELLOW</strong> — Close supervision required. Review due within 30 days. Schedule follow-up call.</div>
+          <div class="tl-legend-item"><div class="tl-light tl-light-green"></div><strong style="color:#2e7d32;">GREEN</strong> — OB is new / still has &gt;3 months before review. No immediate action needed.</div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+          <span class="filter-tab active-all" id="tl-tab-all"   onclick="filterTL('all')">All (6)</span>
+          <span class="filter-tab" id="tl-tab-red"    onclick="filterTL('red')">🔴 Red (4)</span>
+          <span class="filter-tab" id="tl-tab-yellow" onclick="filterTL('yellow')">🟡 Yellow (1)</span>
+          <span class="filter-tab" id="tl-tab-green"  onclick="filterTL('green')">🟢 Green (1)</span>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="red-head" id="tl-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>OB ID</th>
+                <th>Name</th>
+                <th>Medical Aid</th>
+                <th>Zone / Office</th>
+                <th>Last Update</th>
+                <th>Next Review</th>
+                <th>Alert Reason</th>
+                <th>Action Required</th>
+                <th>Case Manager Action</th>
+              </tr>
+            </thead>
+            <tbody id="tl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         🌿 SUSTAINABILITY TRACKER
+    ═══════════════════════════════════════════ -->
+    <div id="page-sustainability" class="page">
+
+      <!-- Hero Banner -->
+      <div class="sustain-hero">
+        <div class="sustain-hero-title">🌿 INSPIRE Sustainability Tracker — Medical Aid Reuse Impact</div>
+        <div class="sustain-hero-sub">Every refurbished unit = CO₂ avoided + manufacturing waste saved + procurement cost reduced. Calculated per aid type based on manufacturing origin &amp; shipping data.</div>
+        <div class="sustain-hero-stats">
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">2,847 kg</div><div class="sustain-hero-lbl">Total CO₂ Saved</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">1,250 kg</div><div class="sustain-hero-lbl">Mfg Waste Avoided</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">418,432 km</div><div class="sustain-hero-lbl">Shipping Avoided</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">85 units</div><div class="sustain-hero-lbl">Reallocated This Year</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">RM 150,000</div><div class="sustain-hero-lbl">Procurement Saved</div></div>
+        </div>
+      </div>
+
+      <!-- Per-Aid Sustainability Cards -->
+      <div style="font-size:12px;font-weight:700;color:#607080;margin-bottom:10px;letter-spacing:0.5px;">SUSTAINABILITY IMPACT PER MEDICAL AID TYPE — Per Reused Unit</div>
+      <div class="sustain-grid" id="sustain-aid-cards"></div>
+
+      <!-- Lifecycle Journey -->
+      <div class="card">
+        <div class="sec-header sec-green">♻ Medical Aid Reuse Lifecycle — How CO₂ is Saved</div>
+        <div class="card-body">
+          <div class="sustain-timeline">
+            <div class="st-node"><div class="st-circle st-active">🏭</div><div class="st-label">Manufacture<br>(Foshan, CN)</div></div>
+            <div class="st-node"><div class="st-circle st-active">🚢</div><div class="st-label">Ship to<br>Malaysia</div></div>
+            <div class="st-node"><div class="st-circle st-active">🏥</div><div class="st-label">Issue to<br>OB</div></div>
+            <div class="st-node"><div class="st-circle st-active">🔄</div><div class="st-label">Retrieve &amp;<br>Refurbish</div></div>
+            <div class="st-node"><div class="st-circle st-active">✅</div><div class="st-label">Reallocate<br>to New OB</div></div>
+            <div class="st-node"><div class="st-circle">🔁</div><div class="st-label">Next<br>Cycle</div></div>
+          </div>
+          <div style="background:#f0f9f0;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b5e20;border:1px solid #c8e6c9;">
+            <strong>💡 How we calculate CO₂ savings:</strong> Each reuse avoids a new unit being manufactured (raw material + production energy) and shipped from origin country (sea freight emission factor × distance × unit weight). We use IPCC sea freight factor of <strong>0.011 kg CO₂/tonne-km</strong> and estimated manufacturing carbon intensity per material type (steel ~1.85 kg CO₂/kg, aluminium ~8.24 kg CO₂/kg).
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Table -->
+      <div class="card">
+        <div class="sec-header sec-green">📋 Sustainability Data — All Refurbished Units</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Filter by Aid:</span>
+          <select id="sustain-filter" onchange="renderSustainTable()"><option>All</option><option>Wheelchair</option><option>Hospital Bed</option><option>Oxygen Concentrator</option><option>Commode</option><option>Crutches</option></select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="teal-head">
+            <thead>
+              <tr>
+                <th>Aid Type</th>
+                <th>Model</th>
+                <th>Manufacturer</th>
+                <th>Origin → Malaysia</th>
+                <th>Ship Distance</th>
+                <th>Unit Weight</th>
+                <th>CO₂ Saved / Unit</th>
+                <th>Mfg Waste Avoided</th>
+                <th>Units Reused</th>
+                <th>Total CO₂ Saved</th>
+              </tr>
+            </thead>
+            <tbody id="sustain-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #content -->
+
+  <div id="footer">
+    <span>INSPIRE v2.1 · PERKESO Medical Aid Lifecycle Management System</span>
+    <span>Prototype · PILLAR 2025 (Alyaa, Amira &amp; Danial)</span>
+  </div>
+</div><!-- end #main -->
+
+<script>
+// ═══════════════════════════════════════════
+// CORE DATA
+// ═══════════════════════════════════════════
+const ZONES = {
+  "Central":    { color:"#1565c0", offices:["Putrajaya","Kuala Lumpur","Petaling Jaya","Klang","Melaka","Muar"], centre:"Pusat Rehab PERKESO Melaka" },
+  "North":      { color:"#00796b", offices:["Ipoh","Pulau Pinang","Alor Setar"],                                  centre:"Pusat Rehab PERKESO Ipoh" },
+  "East Coast": { color:"#e65100", offices:["Kuantan","Kota Bharu","Kuala Terengganu"],                          centre:"Pusat Rehab PERKESO Terengganu" }
+};
+
+const AID_ICONS = { "Wheelchair":"♿","Oxygen Concentrator":"💨","Hospital Bed":"🛏","Hoist":"⚙","Commode":"🚽","Crutches":"🩼" };
+
+const OBS = [
+  { id:"OB-2026-0091", name:"Adam Bin Azman",      aid:"Wheelchair",          zone:"Central",    office:"Petaling Jaya", issued:"15 Feb 2026",  status:"Active",   cat:"RTW",  pred:"Temporary",   conf:38,  weeks:6,  daysLeft:60,  lastUpdate:15,  reviewDate:"2026-05-15" },
+  { id:"OB-2025-0124", name:"Aqilah Binti Amir",   aid:"Hospital Bed",        zone:"North",      office:"Ipoh",          issued:"10 May 2025",  status:"Active",   cat:"ILAT", pred:"Permanent",   conf:60,  weeks:44, daysLeft:null,lastUpdate:72,  reviewDate:"2026-03-20" },
+  { id:"OB-2025-0203", name:"Rajendran A/L Kumar",  aid:"Oxygen Concentrator", zone:"Central",    office:"Johor Bahru",   issued:"21 June 2025", status:"Deceased", cat:"ILAT", pred:"Retrievable",  conf:100, weeks:38, daysLeft:0,   lastUpdate:14,  reviewDate:"2026-02-01" },
+  { id:"OB-2025-0317", name:"Faiqh Leuw",            aid:"Commode",             zone:"East Coast", office:"Kuantan",       issued:"01 Aug 2025",  status:"Active",   cat:"RTW",  pred:"Temporary",   conf:78,  weeks:32, daysLeft:12,  lastUpdate:65,  reviewDate:"2026-03-28" },
+  { id:"OB-2026-0445", name:"Nabhan Bin Tarmizi",  aid:"Wheelchair",          zone:"Central",    office:"Melaka",        issued:"12 Jan 2026",  status:"Active",   cat:"HUS",  pred:"Temporary",   conf:89,  weeks:9,  daysLeft:20,  lastUpdate:7,   reviewDate:"2026-04-12" },
+  { id:"OB-2026-0012", name:"Ain Binti Hashim",    aid:"Crutches",            zone:"East Coast", office:"Terengganu",    issued:"03 Jan 2026",  status:"Active",   cat:"RTW",  pred:"Temporary",   conf:69,  weeks:10, daysLeft:90,  lastUpdate:5,   reviewDate:"2026-06-03" },
+];
+
+const MKT = [
+  { id:"MKT-001", aid:"Wheelchair",   model:"ACARE Wheel Multilight",            cond:"Good",      zone:"Central",    office:"Petaling Jaya", avail:"10 Mar 2026",   ready:true },
+  { id:"MKT-002", aid:"Hospital Bed", model:"HI LO FOWLER BED WITH PU MATRESS", cond:"Excellent", zone:"North",      office:"Ipoh",           avail:"15 Mar 2026",   ready:true },
+  { id:"MKT-004", aid:"Wheelchair",   model:"ACARE Wheel Detachable",            cond:"Fair",      zone:"East Coast", office:"Kuantan",        avail:"20 Mar 2026",   ready:true },
+  { id:"MKT-005", aid:"Commode",      model:"ACARE Commode",                     cond:"Good",      zone:"Central",    office:"Putrajaya",      avail:"17 April 2026", ready:true },
+  { id:"MKT-006", aid:"Crutches",     model:"ACARE Crutches",                    cond:"Good",      zone:"Central",    office:"Melaka",         avail:"18 April 2026", ready:true },
+];
+
+const REFURB = [
+  { id:"RF-2025-001", aid:"Wheelchair",          from:"Putrajaya",  zone:"Central",    centre:"Pusat Rehab PERKESO Melaka",     step:2, eta:"20 May 2026"  },
+  { id:"RF-2025-002", aid:"Hospital Bed",        from:"Ipoh",       zone:"North",      centre:"Pusat Rehab PERKESO Ipoh",       step:4, eta:"14 May 2026"  },
+  { id:"RF-2025-003", aid:"Oxygen Concentrator", from:"Kota Bharu", zone:"East Coast", centre:"Pusat Rehab PERKESO Terengganu", step:0, eta:"01 June 2026" },
+  { id:"RF-2025-004", aid:"Hoist",               from:"Kuantan",    zone:"East Coast", centre:"Pusat Rehab PERKESO Terengganu", step:2, eta:"25 Mar 2026"  },
+  { id:"RF-2025-005", aid:"Wheelchair",          from:"Melaka",     zone:"Central",    centre:"Pusat Rehab PERKESO Melaka",     step:5, eta:"12 July 2026" },
+];
+const REFURB_STEPS = ["Received","Cleaning","UV Sterilisation","Inspection","Certified","Ready"];
+
+const SUSTAIN_AIDS = [
+  {
+    aid: "Wheelchair",
+    model: "ACARE Wheel Multilight (16\")",
+    manufacturer: "Foshan Achieve Medical Technology Co., Ltd",
+    supplier: "1617 (2025)",
+    origin: "Foshan, China",
+    dest: "Port Klang, Malaysia",
+    distKm: 3215,
+    weightKg: 12.85,
+    material: "Aluminium alloy frame",
+    mfgCO2perUnit: 98.4,
+    shipCO2perUnit: 0.45,
+    mfgWasteKg: 4.2,
+    unitsReused: 42,
+    unitsTotal: 85,
+    icon: "♿"
+  },
+  {
+    aid: "Hospital Bed",
+    model: "Hi-Lo Fowler Bed with PU Mattress",
+    manufacturer: "Standard estimate — Steel frame, PU mattress",
+    supplier: "Local / Regional supplier",
+    origin: "China (est.)",
+    dest: "Port Klang, Malaysia",
+    distKm: 3400,
+    weightKg: 85,
+    material: "Steel frame + PU mattress",
+    mfgCO2perUnit: 157.3,
+    shipCO2perUnit: 3.18,
+    mfgWasteKg: 12.5,
+    unitsReused: 18,
+    unitsTotal: 85,
+    icon: "🛏"
+  },
+  {
+    aid: "Oxygen Concentrator",
+    model: "Standard 5L Concentrator",
+    manufacturer: "Standard estimate — Electronic medical device",
+    supplier: "Various",
+    origin: "China (est.)",
+    dest: "Port Klang, Malaysia",
+    distKm: 3200,
+    weightKg: 14,
+    material: "Plastic housing + electronic components",
+    mfgCO2perUnit: 112.0,
+    shipCO2perUnit: 0.49,
+    mfgWasteKg: 3.8,
+    unitsReused: 11,
+    unitsTotal: 85,
+    icon: "💨"
+  },
+  {
+    aid: "Commode",
+    model: "ACARE Commode",
+    manufacturer: "Standard estimate — Steel/aluminium frame",
+    supplier: "Various",
+    origin: "China (est.)",
+    dest: "Port Klang, Malaysia",
+    distKm: 3200,
+    weightKg: 7.5,
+    material: "Steel/aluminium frame + plastic seat",
+    mfgCO2perUnit: 23.1,
+    shipCO2perUnit: 0.26,
+    mfgWasteKg: 1.8,
+    unitsReused: 8,
+    unitsTotal: 85,
+    icon: "🚽"
+  },
+  {
+    aid: "Crutches",
+    model: "ACARE Crutches (pair)",
+    manufacturer: "Standard estimate — Aluminium",
+    supplier: "Various",
+    origin: "China (est.)",
+    dest: "Port Klang, Malaysia",
+    distKm: 3200,
+    weightKg: 1.8,
+    material: "Aluminium alloy",
+    mfgCO2perUnit: 14.8,
+    shipCO2perUnit: 0.06,
+    mfgWasteKg: 0.5,
+    unitsReused: 6,
+    unitsTotal: 85,
+    icon: "🩼"
+  }
+];
+
+// ═══════════════════════════════════════════
+// TRAFFIC LIGHT LOGIC
+// ═══════════════════════════════════════════
+const TODAY = new Date("2026-03-16");
+
+function getTLStatus(ob) {
+  const reviewDate = new Date(ob.reviewDate);
+  const daysToReview = Math.round((reviewDate - TODAY) / 86400000);
+  if (
+    ob.status === "Deceased" ||
+    ob.status === "Recovered" ||
+    ob.pred === "Retrievable" ||
+    ob.lastUpdate >= 60 ||
+    (ob.daysLeft === 0) ||
+    daysToReview < 0
+  ) return "red";
+  if (daysToReview <= 30) return "yellow";
+  return "green";
+}
+
+function getTLReason(ob) {
+  const reviewDate = new Date(ob.reviewDate);
+  const daysToReview = Math.round((reviewDate - TODAY) / 86400000);
+  const reasons = [];
+  if (ob.status === "Deceased")             reasons.push("OB is deceased — aid must be retrieved");
+  if (ob.pred === "Retrievable")            reasons.push("AI prediction: aid retrievable");
+  if (ob.lastUpdate >= 60)                  reasons.push(`No OB update for ${ob.lastUpdate} days`);
+  if (ob.daysLeft === 0)                    reasons.push("Aid overdue for return");
+  if (daysToReview < 0)                     reasons.push(`Review date passed (${ob.reviewDate})`);
+  if (daysToReview >= 0 && daysToReview <= 30) reasons.push(`Review due in ${daysToReview} days`);
+  if (reasons.length === 0)                 reasons.push("On track — no action needed");
+  return reasons;
+}
+
+function getTLAction(status) {
+  if (status === "red")    return "Contact OB immediately. Initiate retrieval process if unresponsive.";
+  if (status === "yellow") return "Schedule follow-up call. Review aid usage within 30 days.";
+  return "Monitor passively. Next scheduled review applies.";
+}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let expandedOB       = null;
+let mktZone          = "All";
+let requestedMkt     = {};
+let refurbZoneFilter = "All";
+let tlFilter         = "all";
+let tlActionLogs     = {};
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => navTo(el.dataset.page, ''));
+});
+
+function navTo(pageId, subFilter) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const navEl = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+  if (navEl) navEl.classList.add('active');
+  const pageEl = document.getElementById('page-' + pageId);
+  if (pageEl) pageEl.classList.add('active');
+  if (pageId === 'retrieval-alerts' && subFilter) {
+    tlFilter = subFilter;
+    renderTLTable();
+    updateTLTabs();
+  }
+}
+
+// ═══════════════════════════════════════════
+// SHARED HELPERS
+// ═══════════════════════════════════════════
+function pillHtml(label) {
+  const map = { "Active":"active","Recovered":"recovered","Deceased":"deceased","Temporary":"temporary","Permanent":"permanent","Retrievable":"retrievable","Ready":"ready","Certified":"certified","Received":"received","In Progress":"inprogress" };
+  return `<span class="pill pill-${map[label]||'gray'}"><span class="pill-dot"></span>${label}</span>`;
+}
+
+function weekBarHtml(weeks, max=104) {
+  const p = Math.min((weeks/max)*100, 100);
+  const col = p<40?"#43a047":p<70?"#ffa000":"#ef5350";
+  return `<div style="font-size:10px;color:#607080;margin-bottom:3px;">${weeks} wks elapsed</div><div class="prog-wrap"><div class="prog-bar" style="width:${p}%;background:${col};"></div></div>`;
+}
+
+function confBarHtml(val) {
+  const col = val>85?"#2e7d32":val>70?"#1976d2":"#f57f17";
+  return `<div class="conf-wrap"><div class="conf-bar"><div class="conf-fill" style="width:${val}%;background:${col};"></div></div><span style="font-size:11px;font-weight:700;color:${col};min-width:32px;">${val}%</span></div>`;
+}
+
+function stepsHtml(step) {
+  let html = '<div class="steps-row">';
+  REFURB_STEPS.forEach((s, i) => {
+    const cls = i < step ? "step-done" : i === step ? "step-active" : "";
+    html += `<div class="step-circle ${cls}" title="${s}">${i < step ? "✓" : i+1}</div>`;
+    if (i < REFURB_STEPS.length-1) html += `<div class="step-line ${i < step ? "done" : ""}"></div>`;
+  });
+  return html + `</div><div style="font-size:10px;color:#1976d2;font-weight:600;margin-top:3px;">${REFURB_STEPS[step]}</div>`;
+}
+
+// ═══════════════════════════════════════════
+// PROVISION TABLE
+// ═══════════════════════════════════════════
+function renderProvisionTable() {
+  const zf = document.getElementById('provision-zone-filter').value;
+  const af = document.getElementById('provision-aid-filter').value;
+  const rows = OBS.filter(o => (zf==="All"||o.zone===zf) && (af==="All"||o.aid===af));
+  document.getElementById('provision-count').textContent = rows.length + " records";
+  const tbody = document.getElementById('provision-tbody');
+  tbody.innerHTML = "";
+  rows.forEach(ob => {
+    const isRetrievable = ob.status==="Recovered" || ob.status==="Deceased";
+    const tr = document.createElement('tr');
+    tr.style.cursor = "pointer";
+    tr.innerHTML = `
+      <td style="color:#1976d2;font-weight:600;">${ob.id}</td>
+      <td style="font-weight:600;">${ob.name}</td>
+      <td>${AID_ICONS[ob.aid]||"🩺"} ${ob.aid}</td>
+      <td><div style="font-weight:600;">${ob.zone}</div><div style="color:#607080;font-size:11px;">${ob.office}</div></td>
+      <td style="color:#607080;">${ob.issued}</td>
+      <td style="min-width:130px;">${weekBarHtml(ob.weeks)}</td>
+      <td>${pillHtml(ob.status)}</td>
+      <td>${pillHtml(ob.pred)}</td>
+      <td style="min-width:120px;">${confBarHtml(ob.conf)}</td>
+      <td>${isRetrievable
+        ? `<button class="btn btn-orange" style="font-size:11px;" onclick="triggerRetrieve(this,'${ob.id}')">🔄 Retrieve</button>`
+        : `<button class="btn btn-outline" style="font-size:11px;">Update</button>`}</td>`;
+    tr.addEventListener('click', e => { if(e.target.tagName==="BUTTON") return; toggleExpand(ob); });
+    tbody.appendChild(tr);
+    const expTr = document.createElement('tr');
+    expTr.id = "exp-" + ob.id;
+    expTr.style.display = "none";
+    const daysDisplay = ob.daysLeft === 0 ? "⚠ Eligible for Retrieval" : ob.daysLeft === null ? "Ongoing" : ob.daysLeft + " days";
+    const daysColor   = ob.daysLeft === 0 ? "#c62828" : "#1a2a3a";
+    expTr.innerHTML = `<td colspan="10" style="padding:0 12px 12px;background:#e8f0fe;"><div class="expand-inner">
+      <div class="expand-box"><div class="expand-lbl">Category</div><div class="expand-val">${ob.cat}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Days Remaining</div><div class="expand-val" style="color:${daysColor};">${daysDisplay}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Rehab Centre (Zone)</div><div class="expand-val" style="font-size:11px;">${ZONES[ob.zone]?.centre||"-"}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Next Review</div><div class="expand-val">${ob.reviewDate}</div></div>
+    </div></td>`;
+    tbody.appendChild(expTr);
+  });
+}
+
+function toggleExpand(ob) {
+  const expRow = document.getElementById("exp-" + ob.id);
+  if (expandedOB === ob.id) { expRow.style.display = "none"; expandedOB = null; }
+  else { document.querySelectorAll('[id^="exp-"]').forEach(r => r.style.display = "none"); expRow.style.display = ""; expandedOB = ob.id; }
+}
+
+function triggerRetrieve(btn, id) {
+  btn.textContent = "✓ Initiated";
+  btn.classList.remove("btn-orange");
+  btn.classList.add("btn-gray");
+  btn.disabled = true;
+}
+
+// ═══════════════════════════════════════════
+// MARKETPLACE
+// ═══════════════════════════════════════════
+function buildMktPills() {}
+function renderMarketplace() {}
+function requestMkt(id, office) {}
+
+// ═══════════════════════════════════════════
+// REFURBISHMENT
+// ═══════════════════════════════════════════
+function renderRefurbZoneCards() {
+  const container = document.getElementById('refurb-zone-cards');
+  container.innerHTML = "";
+  Object.entries(ZONES).forEach(([zone, d]) => {
+    const jobs    = REFURB.filter(j => j.zone===zone);
+    const ready   = jobs.filter(j => j.step===5).length;
+    const inprog  = jobs.filter(j => j.step<5).length;
+    const isActive = refurbZoneFilter===zone;
+    const div = document.createElement('div');
+    div.className = "zone-card" + (isActive?" active":"");
+    div.style.borderColor = isActive ? d.color : "#dde6f0";
+    div.style.background  = isActive ? d.color+"12" : "#fff";
+    div.innerHTML = `
+      <div class="zone-card-title"><div class="zone-dot" style="background:${d.color};"></div>${zone} Zone</div>
+      <div class="zone-centre">🏥 ${d.centre}</div>
+      <div class="zone-counts">
+        <div class="zone-count-box" style="background:#fff8e1;"><div class="zone-count-val" style="color:#ffa000;">${inprog}</div><div class="zone-count-lbl">In Progress</div></div>
+        <div class="zone-count-box" style="background:#e8f5e9;"><div class="zone-count-val" style="color:#2e7d32;">${ready}</div><div class="zone-count-lbl">Ready</div></div>
+      </div>`;
+    div.addEventListener('click', () => {
+      refurbZoneFilter = isActive ? "All" : zone;
+      document.getElementById('refurb-zone-filter').value = refurbZoneFilter;
+      renderRefurbZoneCards(); renderRefurbTable();
+    });
+    container.appendChild(div);
+  });
+}
+
+function renderRefurbTable() {
+  const zf = document.getElementById('refurb-zone-filter').value;
+  refurbZoneFilter = zf;
+  renderRefurbZoneCards();
+  const rows  = REFURB.filter(j => zf==="All" || j.zone===zf);
+  const tbody = document.getElementById('refurb-tbody');
+  tbody.innerHTML = "";
+  const statusLabel = s => s===5?"Ready":s>=3?"Certified":s>=1?"In Progress":"Received";
+  rows.forEach(job => {
+    const zc = ZONES[job.zone]?.color || "#1976d2";
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#1976d2;font-weight:600;">${job.id}</td>
+      <td>${AID_ICONS[job.aid]||"🩺"} ${job.aid}</td>
+      <td>${job.from}</td>
+      <td><span class="pill-zone" style="background:${zc}18;color:${zc};">${job.zone}</span></td>
+      <td style="font-size:11px;color:#607080;">🏥 ${job.centre}</td>
+      <td style="min-width:260px;">${stepsHtml(job.step)}</td>
+      <td style="color:#607080;">${job.eta}</td>
+      <td>${pillHtml(statusLabel(job.step))}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ═══════════════════════════════════════════
+// 🚦 TRAFFIC LIGHT SYSTEM
+// ═══════════════════════════════════════════
+function filterTL(f) {
+  tlFilter = f;
+  renderTLTable();
+  updateTLTabs();
+}
+
+function updateTLTabs() {
+  document.querySelectorAll('.filter-tab').forEach(t => {
+    t.classList.remove('active-all','active-red','active-yellow','active-green');
+  });
+  const map = { all:'active-all', red:'active-red', yellow:'active-yellow', green:'active-green' };
+  const el = document.getElementById('tl-tab-' + tlFilter);
+  if (el) el.classList.add(map[tlFilter]);
+}
+
+function renderTLTable() {
+  const tbody = document.getElementById('tl-tbody');
+  tbody.innerHTML = "";
+  const rows = OBS.filter(ob => {
+    if (tlFilter === "all") return true;
+    return getTLStatus(ob) === tlFilter;
+  });
+  rows.forEach(ob => {
+    const status  = getTLStatus(ob);
+    const reasons = getTLReason(ob);
+    const action  = getTLAction(status);
+    const reviewDate = new Date(ob.reviewDate);
+    const daysToReview = Math.round((reviewDate - TODAY) / 86400000);
+    const reviewDisplay = daysToReview < 0
+      ? `<span style="color:#c62828;font-weight:700;">⚠ ${Math.abs(daysToReview)}d overdue</span>`
+      : `${ob.reviewDate} <span style="color:#607080;">(${daysToReview}d)</span>`;
+    const tlPillMap = {
+      red:    `<span class="tl-pill tl-pill-red"><span style="width:8px;height:8px;border-radius:50%;background:#ef5350;display:inline-block;box-shadow:0 0 6px rgba(239,83,80,0.8);"></span>RED</span>`,
+      yellow: `<span class="tl-pill tl-pill-yellow"><span style="width:8px;height:8px;border-radius:50%;background:#ffa000;display:inline-block;box-shadow:0 0 6px rgba(255,160,0,0.7);"></span>YELLOW</span>`,
+      green:  `<span class="tl-pill tl-pill-green"><span style="width:8px;height:8px;border-radius:50%;background:#43a047;display:inline-block;box-shadow:0 0 6px rgba(67,160,71,0.7);"></span>GREEN</span>`
+    };
+    const rowClass = `alert-row-${status}`;
+    const logId = "log-" + ob.id;
+    const tr = document.createElement('tr');
+    tr.className = rowClass;
+    tr.innerHTML = `
+      <td>${tlPillMap[status]}</td>
+      <td style="color:#1976d2;font-weight:600;white-space:nowrap;">${ob.id}</td>
+      <td style="font-weight:600;">${ob.name}</td>
+      <td>${AID_ICONS[ob.aid]||"🩺"} ${ob.aid}</td>
+      <td><div style="font-weight:600;">${ob.zone}</div><div style="color:#607080;font-size:11px;">${ob.office}</div></td>
+      <td style="color:${ob.lastUpdate>=60?"#c62828":"#607080"};font-weight:${ob.lastUpdate>=60?"700":"400"};">${ob.lastUpdate}d ago</td>
+      <td style="min-width:140px;">${reviewDisplay}</td>
+      <td style="min-width:180px;">
+        ${reasons.map(r => `<div style="font-size:11px;color:${status==='red'?"#c62828":status==='yellow'?"#e65100":"#2e7d32"};margin-bottom:2px;">• ${r}</div>`).join('')}
+      </td>
+      <td style="min-width:180px;font-size:11px;color:#1a2a3a;">${action}</td>
+      <td style="min-width:200px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          ${status==='red'
+            ? `<button class="btn btn-red"     style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','contacted')">📞 Mark Contacted</button>
+               <button class="btn btn-orange"  style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','retrieve')">🔄 Initiate Retrieval</button>`
+            : status==='yellow'
+            ? `<button class="btn btn-primary" style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','scheduled')">📅 Schedule Review</button>
+               <button class="btn btn-outline" style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','noted')">📝 Add Note</button>`
+            : `<button class="btn btn-success" style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','ok')">✅ Confirmed OK</button>`
+          }
+          <div id="${logId}" class="action-log ${tlActionLogs[ob.id]?'show':''}">
+            ${tlActionLogs[ob.id] ? '✅ ' + tlActionLogs[ob.id] : ''}
+          </div>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  const redCount    = OBS.filter(o => getTLStatus(o)==='red').length;
+  const yellowCount = OBS.filter(o => getTLStatus(o)==='yellow').length;
+  const greenCount  = OBS.filter(o => getTLStatus(o)==='green').length;
+  const badgeEl = document.getElementById('badge-red');
+  if (badgeEl) badgeEl.textContent = redCount;
+  const cR = document.getElementById('tl-count-red');
+  const cY = document.getElementById('tl-count-yellow');
+  const cG = document.getElementById('tl-count-green');
+  if (cR) cR.textContent = redCount;
+  if (cY) cY.textContent = yellowCount;
+  if (cG) cG.textContent = greenCount;
+  document.getElementById('tl-tab-all').textContent    = `All (${OBS.length})`;
+  document.getElementById('tl-tab-red').textContent    = `🔴 Red (${redCount})`;
+  document.getElementById('tl-tab-yellow').textContent = `🟡 Yellow (${yellowCount})`;
+  document.getElementById('tl-tab-green').textContent  = `🟢 Green (${greenCount})`;
+}
+
+function logAction(obId, action) {
+  const msgs = {
+    contacted: "Case manager contacted OB — " + new Date().toLocaleDateString(),
+    retrieve:  "Retrieval initiated — " + new Date().toLocaleDateString(),
+    scheduled: "Review scheduled — " + new Date().toLocaleDateString(),
+    noted:     "Note added — " + new Date().toLocaleDateString(),
+    ok:        "OB confirmed active — " + new Date().toLocaleDateString()
+  };
+  tlActionLogs[obId] = msgs[action] || action;
+  renderTLTable();
+}
+
+// ═══════════════════════════════════════════
+// 🌿 SUSTAINABILITY
+// ═══════════════════════════════════════════
+function renderSustainCards() {
+  const container = document.getElementById('sustain-aid-cards');
+  if (!container) return;
+  container.innerHTML = "";
+  SUSTAIN_AIDS.forEach(a => {
+    const totalCO2   = ((a.mfgCO2perUnit + a.shipCO2perUnit) * a.unitsReused).toFixed(1);
+    const totalWaste = (a.mfgWasteKg * a.unitsReused).toFixed(1);
+    const totalDist  = (a.distKm * a.unitsReused).toLocaleString();
+    const pct        = Math.round((a.unitsReused / a.unitsTotal) * 100);
+    const isReal     = a.aid === "Wheelchair";
+    const div = document.createElement('div');
+    div.className = "sustain-aid-card";
+    div.innerHTML = `
+      <div class="sustain-aid-header">
+        <div class="sustain-aid-icon">${a.icon}</div>
+        <div style="flex:1;">
+          <div class="sustain-aid-name">${a.aid}</div>
+          <div class="sustain-aid-meta">${a.model}</div>
+        </div>
+        ${isReal
+          ? `<span style="background:#e8f5e9;color:#2e7d32;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">✅ Verified Data</span>`
+          : `<span style="background:#fff8e1;color:#f57f17;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">📊 Est.</span>`}
+      </div>
+      <div class="sustain-aid-body">
+        <div style="margin-bottom:8px;">
+          <span class="mfr-tag">🏭 ${a.manufacturer.length > 40 ? a.manufacturer.substring(0,38)+'…' : a.manufacturer}</span>
+          <span class="supplier-tag">📦 Supplier: ${a.supplier}</span>
+          <span class="mfr-tag">📍 ${a.origin}</span>
+        </div>
+        <div class="sustain-route">
+          🚢 <strong>${a.origin}</strong> → <strong>${a.dest}</strong> &nbsp;|&nbsp; ${a.distKm.toLocaleString()} km &nbsp;|&nbsp; ${a.weightKg} kg/unit &nbsp;|&nbsp; ${a.material}
+        </div>
+        <div class="sustain-metrics">
+          <div class="sustain-metric">
+            <div class="sustain-metric-icon">🌫</div>
+            <div class="sustain-metric-val" style="color:#1b5e20;">${(a.mfgCO2perUnit + a.shipCO2perUnit).toFixed(1)} kg</div>
+            <div class="sustain-metric-lbl">CO₂ Saved / Unit</div>
+          </div>
+          <div class="sustain-metric">
+            <div class="sustain-metric-icon">🗑</div>
+            <div class="sustain-metric-val" style="color:#1565c0;">${a.mfgWasteKg} kg</div>
+            <div class="sustain-metric-lbl">Waste Avoided / Unit</div>
+          </div>
+          <div class="sustain-metric">
+            <div class="sustain-metric-icon">🚢</div>
+            <div class="sustain-metric-val" style="color:#00796b;">${a.distKm.toLocaleString()} km</div>
+            <div class="sustain-metric-lbl">Shipping Avoided</div>
+          </div>
+        </div>
+        <div style="background:#f9fbe7;border-radius:6px;padding:8px 12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:11px;font-weight:700;color:#1b5e20;">Total Impact — ${a.unitsReused} units reused</span>
+            <span style="font-size:11px;color:#607080;">${a.unitsReused} / ${a.unitsTotal} total units</span>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:12px;"><strong style="color:#2e7d32;">${totalCO2} kg</strong> CO₂ saved</span>
+            <span style="font-size:12px;"><strong style="color:#1565c0;">${totalWaste} kg</strong> waste avoided</span>
+            <span style="font-size:12px;"><strong style="color:#00796b;">${totalDist} km</strong> shipping avoided</span>
+          </div>
+        </div>
+        <div class="sustain-units-bar">
+          <div class="sustain-units-label"><span>${a.unitsReused} units reused (${pct}%)</span><span>${a.unitsTotal - a.unitsReused} remaining</span></div>
+          <div class="sustain-bar-wrap"><div class="sustain-bar-fill" style="width:${pct}%;"></div></div>
+        </div>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function renderSustainTable() {
+  const filter = document.getElementById('sustain-filter')?.value || "All";
+  const tbody  = document.getElementById('sustain-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  const rows = SUSTAIN_AIDS.filter(a => filter === "All" || a.aid === filter);
+  rows.forEach(a => {
+    const totalCO2perUnit = (a.mfgCO2perUnit + a.shipCO2perUnit).toFixed(2);
+    const totalCO2all     = ((a.mfgCO2perUnit + a.shipCO2perUnit) * a.unitsReused).toFixed(1);
+    const isReal = a.aid === "Wheelchair";
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${a.icon} <strong>${a.aid}</strong></td>
+      <td style="font-size:11px;">${a.model}</td>
+      <td style="font-size:10px;color:#607080;">${a.manufacturer} ${isReal?"<span style='background:#e8f5e9;color:#2e7d32;border-radius:3px;padding:1px 5px;font-weight:700;'>✅</span>":"<span style='background:#fff8e1;color:#f57f17;border-radius:3px;padding:1px 5px;font-weight:700;'>est</span>"}</td>
+      <td style="font-size:11px;">📍 ${a.origin} → ${a.dest}</td>
+      <td style="color:#00796b;font-weight:600;">${a.distKm.toLocaleString()} km</td>
+      <td style="color:#1a2a3a;">${a.weightKg} kg</td>
+      <td style="color:#2e7d32;font-weight:700;">${totalCO2perUnit} kg CO₂</td>
+      <td style="color:#1565c0;font-weight:600;">${a.mfgWasteKg} kg</td>
+      <td style="font-weight:700;">${a.unitsReused}</td>
+      <td style="color:#2e7d32;font-weight:800;font-size:13px;">${totalCO2all} kg</td>`;
+    tbody.appendChild(tr);
+  });
+  if (filter === "All") {
+    const totalCO2  = SUSTAIN_AIDS.reduce((s,a) => s + (a.mfgCO2perUnit + a.shipCO2perUnit) * a.unitsReused, 0).toFixed(1);
+    const totalW    = SUSTAIN_AIDS.reduce((s,a) => s + a.mfgWasteKg * a.unitsReused, 0).toFixed(1);
+    const totalU    = SUSTAIN_AIDS.reduce((s,a) => s + a.unitsReused, 0);
+    const tr = document.createElement('tr');
+    tr.style.background = "#e8f5e9";
+    tr.style.fontWeight = "700";
+    tr.innerHTML = `<td colspan="8" style="text-align:right;color:#1b5e20;">TOTAL (${totalU} units reused)</td><td style="font-weight:800;">${totalU}</td><td style="color:#2e7d32;font-weight:900;font-size:14px;">${totalCO2} kg CO₂</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ═══════════════════════════════════════════
+// ZONE QUICK VIEW (dashboard)
+// ═══════════════════════════════════════════
+function buildZoneQuickView() {
+  const container = document.getElementById('zone-quick-view');
+  if (!container) return;
+  container.innerHTML = Object.entries(ZONES).map(([zone, d]) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f4f8;font-size:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:9px;height:9px;border-radius:50%;background:${d.color};"></div>
+        <span style="font-weight:500;">${zone}</span>
+      </div>
+      <span style="color:#607080;">${d.offices.length} offices</span>
+    </div>`).join("");
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+buildZoneQuickView();
+renderProvisionTable();
+renderRefurbZoneCards();
+renderRefurbTable();
+renderTLTable();
+updateTLTabs();
+renderSustainCards();
+renderSustainTable();
+</script>
+</body>
+</html>
