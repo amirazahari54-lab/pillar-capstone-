@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSPIRE – Lifecycle Monitoring & Retrieval Management</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Calibri, sans-serif; background: #f0f4f8; color: #1a2a3a; display: flex; min-height: 100vh; }
+
+  #sidebar { width: 215px; min-width: 215px; background: #1a3a6b; display: flex; flex-direction: column; min-height: 100vh; }
+  .sidebar-logo { padding: 16px; border-bottom: 1px solid #2a5298; display: flex; align-items: center; gap: 10px; }
+  .logo-box { background: linear-gradient(135deg,#42a5f5,#1565c0); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 18px; }
+  .logo-name { color: #fff; font-weight: 800; font-size: 15px; letter-spacing: 1px; }
+  nav { flex: 1; padding: 8px 0; }
+  .nav-section { padding: 6px 16px 3px; font-size: 9px; letter-spacing: 1.8px; color: #4a6fa5; text-transform: uppercase; font-weight: 700; margin-top: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; color: #cce0ff; font-size: 12.5px; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); }
+  .nav-item.active { background: linear-gradient(90deg,#1976d2,rgba(21,101,192,0.8)); border-left: 3px solid #42a5f5; color: #fff; font-weight: 700; }
+  .nav-icon { font-size: 14px; }
+  .nav-badge { margin-left: auto; border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: 700; }
+  .badge-red    { background: #ef5350; color: #fff; }
+  .badge-yellow { background: #ffa000; color: #fff; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid #2a5298; font-size: 11px; color: #7eaee0; }
+  .sidebar-footer span { color: #42a5f5; font-weight: 600; display: block; }
+
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topbar { background: linear-gradient(135deg,#1e4080,#1565c0); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; }
+  .topbar-title { color: #fff; font-weight: 700; font-size: 15px; }
+  .topbar-right { display: flex; align-items: center; gap: 20px; color: #cce0ff; font-size: 13px; }
+  .topbar-right strong { color: #fff; }
+  #content { flex: 1; padding: 20px 24px; overflow-y: auto; }
+  #footer { background: #fff; border-top: 1px solid #dde6f0; padding: 8px 24px; font-size: 11px; color: #607080; display: flex; justify-content: space-between; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── STAT CARDS ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card { border-radius: 10px; padding: 16px 18px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .stat-card .s-label { font-size: 11px; opacity: .85; font-weight: 500; }
+  .stat-card .s-val   { font-size: 30px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
+  .stat-card .s-sub   { font-size: 11px; opacity: .75; margin-top: 3px; }
+  .stat-blue   { background: linear-gradient(135deg,#1e88e5,#1565c0); }
+  .stat-teal   { background: linear-gradient(135deg,#00acc1,#00796b); }
+  .stat-orange { background: linear-gradient(135deg,#fb8c00,#e65100); }
+  .stat-green  { background: linear-gradient(135deg,#43a047,#2e7d32); }
+  .stat-red    { background: linear-gradient(135deg,#ef5350,#c62828); }
+  .stat-yellow { background: linear-gradient(135deg,#ffa000,#e65100); }
+  .stat-lime   { background: linear-gradient(135deg,#66bb6a,#2e7d32); }
+  .stat-purple { background: linear-gradient(135deg,#7c4dff,#4527a0); }
+
+  /* ── CARDS ── */
+  .card { background: #fff; border: 1px solid #dde6f0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; margin-bottom: 14px; }
+  .sec-header { padding: 8px 16px; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.3px; display: flex; align-items: center; justify-content: space-between; }
+  .sec-blue   { background: linear-gradient(90deg,#1565c0,rgba(21,101,192,0.87)); }
+  .sec-teal   { background: linear-gradient(90deg,#00796b,rgba(0,121,107,0.87)); }
+  .sec-green  { background: linear-gradient(90deg,#2e7d32,rgba(46,125,50,0.87)); }
+  .sec-red    { background: linear-gradient(90deg,#c62828,rgba(198,40,40,0.87)); }
+  .card-body  { padding: 14px 16px; }
+
+  /* ── PILLS ── */
+  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .pill-active     { background:#e8f5e9; color:#2e7d32; } .pill-active .pill-dot     { background:#43a047; }
+  .pill-recovered  { background:#fff8e1; color:#f57f17; } .pill-recovered .pill-dot  { background:#ffa000; }
+  .pill-deceased   { background:#ffebee; color:#c62828; } .pill-deceased .pill-dot   { background:#ef5350; }
+  .pill-temporary  { background:#e3f2fd; color:#1565c0; } .pill-temporary .pill-dot  { background:#1976d2; }
+  .pill-permanent  { background:#ede7f6; color:#4527a0; } .pill-permanent .pill-dot  { background:#7c4dff; }
+  .pill-retrievable{ background:#fff3e0; color:#e65100; } .pill-retrievable .pill-dot{ background:#fb8c00; }
+  .pill-ready      { background:#e8f5e9; color:#2e7d32; } .pill-ready .pill-dot      { background:#43a047; }
+  .pill-certified  { background:#e3f2fd; color:#1565c0; } .pill-certified .pill-dot  { background:#1976d2; }
+  .pill-received   { background:#f3e5f5; color:#6a1b9a; } .pill-received .pill-dot   { background:#ab47bc; }
+  .pill-inprogress { background:#fff8e1; color:#f57f17; } .pill-inprogress .pill-dot { background:#ffa000; }
+  .pill-zone { border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+
+  /* ── BUTTONS ── */
+  .btn { border-radius: 4px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-primary  { background: #1976d2; color: #fff; }
+  .btn-success  { background: #2e7d32; color: #fff; }
+  .btn-orange   { background: #fb8c00; color: #fff; }
+  .btn-red      { background: #c62828; color: #fff; }
+  .btn-outline  { background: transparent; color: #1976d2; border: 1px solid #1976d2 !important; }
+  .btn-gray     { background: #90a4ae; color: #fff; }
+  .btn:hover    { opacity: .88; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: #e8f0fe; }
+  th { padding: 9px 12px; text-align: left; font-weight: 700; font-size: 11px; border-bottom: 1px solid #dde6f0; color: #1a2a3a; }
+  td { padding: 9px 12px; border-bottom: 1px solid #dde6f0; vertical-align: middle; }
+  tbody tr:nth-child(even) { background: #fafcff; }
+  tbody tr:hover { background: #e8f0fe; }
+  .teal-head thead tr { background: #e0f7f4; }
+  .red-head thead tr { background: #ffebee; }
+
+  /* ── PROGRESS ── */
+  .prog-wrap { background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden; }
+  .prog-bar  { height: 100%; border-radius: 4px; }
+  .conf-wrap { display: flex; align-items: center; gap: 8px; }
+  .conf-bar  { flex: 1; background: #e0e0e0; border-radius: 4px; height: 7px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 4px; }
+
+  /* ── REFURB STEPS ── */
+  .steps-row { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .step-circle { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; border: 2px solid #bdbdbd; background: #e0e0e0; color: #9e9e9e; }
+  .step-done   { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+  .step-active { background: #1976d2; border-color: #1976d2; color: #fff; }
+  .step-line   { width: 10px; height: 2px; background: #e0e0e0; }
+  .step-line.done { background: #2e7d32; }
+
+  /* ── DASHBOARD ── */
+  .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+  .patient-bar { display: flex; gap: 8px; margin-bottom: 2px; }
+  .patient-bar .pb-fill { flex: 1; height: 8px; border-radius: 2px; }
+  .impact-item { display: flex; align-items: center; gap: 12px; background: #f5f9ff; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .impact-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 800; }
+  .impact-val  { font-size: 18px; font-weight: 800; }
+  .impact-lbl  { font-size: 11px; color: #607080; }
+
+  /* ── ZONE CARDS ── */
+  .zone-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
+  .zone-card { border: 2px solid #dde6f0; border-radius: 8px; padding: 12px 16px; cursor: pointer; transition: all 0.15s; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .zone-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+  .zone-card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .zone-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .zone-centre { font-size: 11px; color: #607080; margin-bottom: 10px; }
+  .zone-counts { display: flex; gap: 8px; }
+  .zone-count-box { flex: 1; border-radius: 6px; padding: 6px; text-align: center; }
+  .zone-count-val { font-size: 18px; font-weight: 800; }
+  .zone-count-lbl { font-size: 10px; color: #607080; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar { padding: 10px 16px; background: #f5f9ff; border-bottom: 1px solid #dde6f0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .filter-bar select, .filter-bar input { border: 1px solid #dde6f0; border-radius: 5px; padding: 6px 10px; font-size: 12px; color: #1a2a3a; background: #fff; }
+
+  /* ── EXPAND ROW ── */
+  .expand-inner { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 12px; }
+  .expand-box { background: #fff; border-radius: 6px; padding: 10px 14px; border: 1px solid #dde6f0; }
+  .expand-lbl { font-size: 10px; color: #607080; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .expand-val { font-size: 12px; font-weight: 700; }
+
+  .retrieval-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f4f8; }
+  .retrieval-label { flex: 1; font-size: 13px; font-weight: 500; }
+  .realloc-head { background: #f5f9ff; }
+
+  /* ── TRAFFIC LIGHT ── */
+  .tl-legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 10px 16px; background: #fafcff; border-bottom: 1px solid #dde6f0; font-size: 11px; }
+  .tl-legend-item { display: flex; align-items: center; gap: 6px; }
+  .tl-light { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.15); flex-shrink: 0; }
+  .tl-light-red    { background: #ef5350; box-shadow: 0 0 6px rgba(239,83,80,0.6); }
+  .tl-light-yellow { background: #ffa000; box-shadow: 0 0 6px rgba(255,160,0,0.5); }
+  .tl-light-green  { background: #43a047; box-shadow: 0 0 6px rgba(67,160,71,0.5); }
+  .alert-row-red    { border-left: 4px solid #ef5350; background: #fff5f5 !important; }
+  .alert-row-yellow { border-left: 4px solid #ffa000; background: #fffbf0 !important; }
+  .alert-row-green  { border-left: 4px solid #43a047; background: #f5fff6 !important; }
+  .tl-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .tl-pill-red    { background:#ffebee; color:#c62828; border:1.5px solid #ffcdd2; }
+  .tl-pill-yellow { background:#fff8e1; color:#e65100; border:1.5px solid #ffe082; }
+  .tl-pill-green  { background:#e8f5e9; color:#2e7d32; border:1.5px solid #c8e6c9; }
+  .filter-tabs { display: flex; gap: 4px; padding: 10px 16px; background: #f5f9ff; border-bottom: 1px solid #dde6f0; flex-wrap: wrap; }
+  .filter-tab { border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px solid #dde6f0; background: #fff; color: #607080; transition: all 0.15s; }
+  .filter-tab.active-red    { background:#ffebee; color:#c62828; border-color:#ffcdd2; }
+  .filter-tab.active-yellow { background:#fff8e1; color:#e65100; border-color:#ffe082; }
+  .filter-tab.active-green  { background:#e8f5e9; color:#2e7d32; border-color:#c8e6c9; }
+  .filter-tab.active-all    { background:#e3f2fd; color:#1565c0; border-color:#90caf9; }
+  .filter-tab:hover { opacity:.8; }
+  .action-log { margin-top: 6px; background: #f5f9ff; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #1a2a3a; display: none; }
+  .action-log.show { display: block; }
+
+  /* ── SUSTAINABILITY ── */
+  .sustain-hero { background: linear-gradient(135deg,#1b5e20,#2e7d32,#00695c); border-radius: 10px; padding: 20px 24px; color: #fff; margin-bottom: 16px; }
+  .sustain-hero-title { font-size:16px; font-weight:800; margin-bottom:4px; }
+  .sustain-hero-sub   { font-size:11px; opacity:.8; margin-bottom:14px; }
+  .sustain-hero-stats { display:flex; gap:20px; flex-wrap:wrap; }
+  .sustain-hero-stat  { background:rgba(255,255,255,0.12); border-radius:8px; padding:10px 16px; text-align:center; min-width:110px; }
+  .sustain-hero-val   { font-size:22px; font-weight:800; }
+  .sustain-hero-lbl   { font-size:10px; opacity:.8; margin-top:2px; }
+  .sustain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .sustain-aid-card { border: 1px solid #dde6f0; border-radius: 8px; overflow: hidden; background: #fff; }
+  .sustain-aid-header { padding: 10px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #e8f5e9; background: linear-gradient(90deg,#e8f5e9,#f1f8e9); }
+  .sustain-aid-icon { font-size: 26px; }
+  .sustain-aid-name { font-weight: 700; font-size: 13px; }
+  .sustain-aid-meta { font-size: 10px; color: #607080; margin-top: 2px; }
+  .sustain-aid-body { padding: 12px 14px; }
+  .sustain-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .sustain-metric { background: #f5f9ff; border-radius: 6px; padding: 8px 10px; text-align: center; }
+  .sustain-metric-val  { font-size: 14px; font-weight: 800; color: #1a2a3a; }
+  .sustain-metric-lbl  { font-size: 9px; color: #607080; text-transform: uppercase; margin-top: 2px; }
+  .sustain-route { background: #e8f5e9; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #1b5e20; margin-bottom: 8px; }
+  .sustain-bar-wrap { background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden; }
+  .sustain-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#43a047,#2e7d32); }
+  .mfr-tag { display:inline-block; background:#e3f2fd; color:#1565c0; border-radius:4px; padding:2px 8px; font-size:10px; font-weight:600; margin-right:4px; margin-bottom:4px; }
+  .supplier-tag { display:inline-block; background:#f3e5f5; color:#6a1b9a; border-radius:4px; padding:2px 8px; font-size:10px; font-weight:600; margin-right:4px; margin-bottom:4px; }
+  .sustain-timeline { display: flex; gap: 0; margin: 14px 0; position: relative; }
+  .sustain-timeline::before { content:''; position:absolute; top:16px; left:16px; right:16px; height:2px; background:#e0e0e0; z-index:0; }
+  .st-node { flex: 1; text-align: center; position: relative; z-index: 1; }
+  .st-circle { width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid #e0e0e0; background: #fff; }
+  .st-active { border-color: #2e7d32; background: #e8f5e9; }
+  .st-label { font-size: 9px; color: #607080; font-weight: 600; text-transform: uppercase; }
+
+  /* ── DASHBOARD ALERT CARDS ── */
+  .dash-alert-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+  .dash-alert-card { border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.1s; }
+  .dash-alert-card:hover { transform: translateY(-1px); }
+  .dash-alert-card .dac-light { width: 18px; height: 18px; border-radius: 50%; flex-shrink:0; }
+  .dac-red    { background: #ffebee; border: 1.5px solid #ffcdd2; }
+  .dac-yellow { background: #fff8e1; border: 1.5px solid #ffe082; }
+  .dac-green  { background: #e8f5e9; border: 1.5px solid #c8e6c9; }
+  .dac-light-red    { background: #ef5350; box-shadow: 0 0 8px rgba(239,83,80,0.7); }
+  .dac-light-yellow { background: #ffa000; box-shadow: 0 0 8px rgba(255,160,0,0.6); }
+  .dac-light-green  { background: #43a047; box-shadow: 0 0 8px rgba(67,160,71,0.6); }
+  .dac-count { font-size: 24px; font-weight: 800; }
+  .dac-count-red    { color: #c62828; }
+  .dac-count-yellow { color: #e65100; }
+  .dac-count-green  { color: #2e7d32; }
+  .dac-label { font-size: 11px; font-weight: 600; color: #1a2a3a; margin-top: 2px; }
+  .dac-sub   { font-size: 10px; color: #607080; }
+
+  /* ══════════════════════════════
+     MODAL STYLES
+  ══════════════════════════════ */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,20,40,0.55); z-index: 9999;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.18s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .modal-box {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 560px; max-width: 95vw; max-height: 88vh;
+    overflow-y: auto; animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform:translateY(24px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid #dde6f0;
+    position: sticky; top: 0; background: #fff; z-index: 1;
+  }
+  .modal-title { font-size: 15px; font-weight: 800; color: #1a2a3a; }
+  .modal-subtitle { font-size: 11px; color: #607080; margin-top: 2px; }
+  .modal-close {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: none; background: #f0f4f8; cursor: pointer;
+    font-size: 16px; color: #607080; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: #ffebee; color: #c62828; }
+  .modal-body { padding: 20px; }
+  .modal-footer {
+    padding: 14px 20px; border-top: 1px solid #dde6f0;
+    display: flex; gap: 10px; justify-content: flex-end;
+    background: #f5f9ff;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 11px; font-weight: 700; color: #1a2a3a; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-label .required { color: #c62828; margin-left: 3px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 9px 12px;
+    border: 1.5px solid #dde6f0; border-radius: 6px;
+    font-size: 13px; font-family: inherit; color: #1a2a3a;
+    background: #fff; transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none; border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+  }
+  .form-textarea { resize: vertical; min-height: 72px; }
+  .form-input[readonly] { background: #f5f9ff; color: #607080; cursor: not-allowed; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-section-title { font-size: 11px; font-weight: 700; color: #607080; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f0f4f8; }
+  .modal-info-block { background: #f0f6ff; border: 1px solid #b3d1f5; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 12px; }
+  .modal-info-block strong { color: #1565c0; }
+  .modal-info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .modal-info-row:last-child { margin-bottom: 0; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    color: #fff; border-radius: 8px; padding: 12px 20px;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.2); z-index: 99999;
+    display: flex; align-items: center; gap: 10px; max-width: 340px;
+    animation: slideInRight 0.25s ease, fadeOut 0.3s ease 3s forwards;
+  }
+  @keyframes slideInRight { from { transform:translateX(80px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+  @keyframes fadeOut { to { opacity:0; transform:translateY(10px); } }
+
+  /* ── BANNER ── */
+  .success-banner {
+    display: none; background: #e8f5e9; border: 1px solid #a5d6a7;
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;
+    align-items: center; gap: 12px;
+  }
+  .info-banner {
+    display: none; background: #e3f2fd; border: 1px solid #90caf9;
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;
+    align-items: center; gap: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     MODAL 1 — Update Progress (Dashboard → Provision)
+     Used by: Dashboard "Update Progress" button
+     On submit: saves + navigates to Provision page
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-update-progress">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📋 Update OB Progress</div>
+        <div class="modal-subtitle">This update will reflect in the Medical Aid Provision page</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-update-progress')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-block">
+        <div class="modal-info-row"><strong>OB:</strong> Adam Bin Azman &nbsp;|&nbsp; <strong>ID:</strong> OB-2026-0091</div>
+        <div class="modal-info-row"><strong>Aid:</strong> ♿ Wheelchair &nbsp;|&nbsp; <strong>Issued:</strong> 15 Feb 2026 &nbsp;|&nbsp; <strong>Current Status:</strong> Active / Temporary</div>
+      </div>
+      <div class="form-section-title">Rehabilitation Progress</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">OB Status <span class="required">*</span></label>
+          <select class="form-select" id="m1-status">
+            <option value="Active">Active</option>
+            <option value="Recovered">Recovered</option>
+            <option value="Deceased">Deceased</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Aid Prediction <span class="required">*</span></label>
+          <select class="form-select" id="m1-prediction">
+            <option value="Temporary">Temporary</option>
+            <option value="Permanent">Permanent</option>
+            <option value="Retrievable">Retrievable</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rehab Progress (%)</label>
+          <input class="form-input" type="number" id="m1-progress" min="0" max="100" placeholder="e.g. 65" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Next Review Date <span class="required">*</span></label>
+          <input class="form-input" type="date" id="m1-review-date" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Recovery Notes</label>
+        <textarea class="form-textarea" id="m1-notes" placeholder="Describe current mobility, therapy progress, any concerns..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Updated by (Case Manager)</label>
+          <input class="form-input" id="m1-manager" value="Case Manager — PP Putrajaya" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Update</label>
+          <input class="form-input" id="m1-date" readonly />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-update-progress')">Cancel</button>
+      <button class="btn btn-success" onclick="submitModal1()">✅ Save &amp; Go to Provision Page →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL 2 — Schedule Pickup (Dashboard → Alerts)
+     Used by: Dashboard "Schedule Pickup" buttons
+     On submit: saves + navigates to Retrieval Alerts
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-schedule-pickup">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🚐 Schedule Aid Pickup</div>
+        <div class="modal-subtitle">Pickup details will auto-fill in the Retrieval Alerts log</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-schedule-pickup')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-block">
+        <div class="modal-info-row"><strong>OB:</strong> Adam Bin Azman &nbsp;|&nbsp; <strong>ID:</strong> OB-2026-0091</div>
+        <div class="modal-info-row"><strong>Aid:</strong> ♿ Wheelchair &nbsp;|&nbsp; <strong>Office:</strong> Petaling Jaya &nbsp;|&nbsp; <strong>Zone:</strong> Central</div>
+      </div>
+      <div class="form-section-title">Pickup Scheduling Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pickup Date <span class="required">*</span></label>
+          <input class="form-input" type="date" id="sp-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred Time <span class="required">*</span></label>
+          <select class="form-select" id="sp-time">
+            <option>Morning (8am – 12pm)</option>
+            <option>Afternoon (12pm – 5pm)</option>
+            <option>Any time</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">OB Home Address <span class="required">*</span></label>
+        <input class="form-input" type="text" id="sp-address" placeholder="Full address for pickup..." />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Contact Number <span class="required">*</span></label>
+          <input class="form-input" type="tel" id="sp-phone" placeholder="OB or guardian's number" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pickup Method</label>
+          <select class="form-select" id="sp-method">
+            <option>PERKESO transport van</option>
+            <option>Third-party logistics</option>
+            <option>OB self-pickup</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason for Retrieval <span class="required">*</span></label>
+        <select class="form-select" id="sp-reason">
+          <option>Recovery Confirmed — Aid No Longer Needed</option>
+          <option>Transition to Other Aid</option>
+          <option>Case Closure</option>
+          <option>No Update (60+ Days)</option>
+          <option>OB Deceased</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Additional Notes</label>
+        <textarea class="form-textarea" id="sp-notes" placeholder="Any access instructions, special handling notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-schedule-pickup')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitSchedulePickup()">📅 Confirm Pickup &amp; Go to Alerts →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL 3 — Allocate Now (Refurbishment → Provision)
+     Used by: Dashboard "Allocate Now" button
+     On submit: adds new OB row + navigates to Provision
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-allocate">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🔄 Allocate Refurbished Aid to New OB</div>
+        <div class="modal-subtitle">Allocation will create a new entry in Medical Aid Provision</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-allocate')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-block">
+        <div class="modal-info-row"><strong>Aid:</strong> ♿ Wheelchair &nbsp;|&nbsp; <strong>Condition:</strong> ✅ Certified for Use</div>
+        <div class="modal-info-row"><strong>Inspected:</strong> 10 April 2026 &nbsp;|&nbsp; <strong>Zone:</strong> Central &nbsp;|&nbsp; <strong>From:</strong> Petaling Jaya</div>
+      </div>
+      <div class="form-section-title">New OB Information</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">New OB ID <span class="required">*</span></label>
+          <input class="form-input" type="text" id="al-ob-id" placeholder="e.g. OB-2026-0610" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name <span class="required">*</span></label>
+          <input class="form-input" type="text" id="al-name" placeholder="Full name of new OB" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Injury Category <span class="required">*</span></label>
+          <select class="form-select" id="al-cat">
+            <option>RTW</option><option>ILAT</option><option>HUK</option><option>HUS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Zone <span class="required">*</span></label>
+          <select class="form-select" id="al-zone">
+            <option>Central</option><option>North</option><option>East Coast</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Assigned Office <span class="required">*</span></label>
+          <select class="form-select" id="al-office">
+            <option>Putrajaya</option><option>Kuala Lumpur</option><option>Petaling Jaya</option>
+            <option>Klang</option><option>Melaka</option><option>Muar</option>
+            <option>Ipoh</option><option>Pulau Pinang</option><option>Alor Setar</option>
+            <option>Kuantan</option><option>Kota Bharu</option><option>Kuala Terengganu</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Allocation Date <span class="required">*</span></label>
+          <input class="form-input" type="date" id="al-date" />
+        </div>
+      </div>
+      <div class="form-section-title" style="margin-top:4px;">Aid Details (Auto-filled)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Medical Aid</label>
+          <input class="form-input" value="Wheelchair" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Initial AI Prediction</label>
+          <select class="form-select" id="al-prediction">
+            <option>Temporary</option><option>Permanent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allocation Notes</label>
+        <textarea class="form-textarea" id="al-notes" placeholder="Medical justification, doctor's recommendation, urgency notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-allocate')">Cancel</button>
+      <button class="btn btn-success" onclick="submitAllocate()">✅ Allocate &amp; Go to Provision Page →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL 4 — Update OB Progress (Provision page)
+     Used by: "Update" Action button in Provision table
+     On submit: updates that OB row in-place, stays on Provision page
+     FIX: unique IDs (m4-*), correct closeModal ID, no navigation away
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-provision-update">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📋 Update OB Progress</div>
+        <!-- Subtitle dynamically filled with the OB's name -->
+        <div class="modal-subtitle" id="m4-subtitle">Update progress for selected OB</div>
+      </div>
+      <!-- FIX 1: correct modal ID in closeModal call -->
+      <button class="modal-close" onclick="closeModal('modal-provision-update')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- FIX: dynamic info block filled by openProvisionUpdateModal() -->
+      <div class="modal-info-block" id="m4-info-block">
+        <div class="modal-info-row" id="m4-info-row1"></div>
+        <div class="modal-info-row" id="m4-info-row2"></div>
+      </div>
+      <div class="form-section-title">Rehabilitation Progress</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">OB Status <span class="required">*</span></label>
+          <!-- FIX 2: all IDs prefixed m4- to avoid duplicates -->
+          <select class="form-select" id="m4-status">
+            <option value="Active">Active</option>
+            <option value="Recovered">Recovered</option>
+            <option value="Deceased">Deceased</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Aid Prediction <span class="required">*</span></label>
+          <select class="form-select" id="m4-prediction">
+            <option value="Temporary">Temporary</option>
+            <option value="Permanent">Permanent</option>
+            <option value="Retrievable">Retrievable</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rehab Progress (%)</label>
+          <input class="form-input" type="number" id="m4-progress" min="0" max="100" placeholder="e.g. 65" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Next Review Date <span class="required">*</span></label>
+          <input class="form-input" type="date" id="m4-review-date" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Recovery Notes</label>
+        <textarea class="form-textarea" id="m4-notes" placeholder="Describe current mobility, therapy progress, any concerns..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Updated by (Case Manager)</label>
+          <input class="form-input" id="m4-manager" value="Case Manager — PP Putrajaya" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Update</label>
+          <input class="form-input" id="m4-date" readonly />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <!-- FIX 1: correct modal ID -->
+      <button class="btn btn-outline" onclick="closeModal('modal-provision-update')">Cancel</button>
+      <button class="btn btn-success" onclick="submitModal4()">✅ Save Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-box">i</div>
+    <div><div class="logo-name">INSPIRE</div></div>
+  </div>
+  <nav id="nav">
+    <div class="nav-section">Core</div>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item" data-page="provision"><span class="nav-icon">📋</span> Medical Aid Provision</div>
+    <div class="nav-item" data-page="refurbishment"><span class="nav-icon">🔧</span> Refurbishment Status</div>
+    <div class="nav-section">Monitoring</div>
+    <div class="nav-item" data-page="retrieval-alerts"><span class="nav-icon">🚦</span> Retrieval Alerts <span class="nav-badge badge-red" id="badge-red">4</span></div>
+    <div class="nav-section">Reports</div>
+    <div class="nav-item" data-page="sustainability"><span class="nav-icon">🌿</span> Sustainability Tracker</div>
+  </nav>
+  <div class="sidebar-footer">Case Manager<span>PP Putrajaya Office</span></div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title">Lifecycle Monitoring &amp; Retrieval Management</div>
+    <div class="topbar-right"><strong>Case Manager</strong><span>Notifications</span><span>Settings</span><span>🔔</span></div>
+  </div>
+
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | HUS | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#607080;margin-bottom:8px;letter-spacing:0.5px;">🚦 RETRIEVAL ALERT OVERVIEW — TRAFFIC LIGHT STATUS</div>
+      <div class="dash-alert-grid">
+        <div class="dash-alert-card dac-red" onclick="navTo('retrieval-alerts','red')">
+          <div class="dac-light dac-light-red"></div>
+          <div><div class="dac-count dac-count-red">3</div><div class="dac-label">🔴 Red — Urgent Action</div><div class="dac-sub">Deceased / 60+ day no update / overdue</div></div>
+        </div>
+        <div class="dash-alert-card dac-yellow" onclick="navTo('retrieval-alerts','yellow')">
+          <div class="dac-light dac-light-yellow"></div>
+          <div><div class="dac-count dac-count-yellow">1</div><div class="dac-label">🟡 Yellow — Close Supervision</div><div class="dac-sub">Review due within 30 days</div></div>
+        </div>
+        <div class="dash-alert-card dac-green" onclick="navTo('retrieval-alerts','green')">
+          <div class="dac-light dac-light-green"></div>
+          <div><div class="dac-count dac-count-green">2</div><div class="dac-label">🟢 Green — On Track</div><div class="dac-sub">New / &gt;3 months remaining</div></div>
+        </div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1px solid #c8e6c9;">
+        <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:32px;">🌿</div>
+            <div><div style="font-weight:700;font-size:13px;color:#1b5e20;">Sustainability Impact This Year</div><div style="font-size:11px;color:#388e3c;">Across all refurbished &amp; reallocated medical aids</div></div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#2e7d32;">2,847 kg</div><div style="font-size:10px;color:#607080;">CO₂ Saved</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#00796b;">1,250 kg</div><div style="font-size:10px;color:#607080;">Waste Avoided</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#1565c0;">RM 150,000</div><div style="font-size:10px;color:#607080;">Procurement Saved</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#6a1b9a;">85 units</div><div style="font-size:10px;color:#607080;">Reallocated</div></div>
+          </div>
+          <button class="btn btn-success" style="font-size:11px;" onclick="navTo('sustainability','')">View Full Report →</button>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <div>
+          <div class="card">
+            <div class="sec-header sec-blue">OB Overview</div>
+            <div class="card-body">
+              <div style="font-size:13px;margin-bottom:12px;">
+                <strong style="font-size:15px;">Adam Bin Azman</strong><span style="color:#607080;margin:0 10px;">|</span>
+                <span style="color:#607080;">Case ID: </span><strong>18736160</strong><span style="color:#607080;margin:0 10px;">|</span>
+                <span style="color:#607080;">Category: </span><strong style="color:#1976d2;">RTW (Return to Work)</strong>
+              </div>
+              <div style="background:#f5f9ff;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:14px;">
+                <div style="font-size:40px;">♿</div>
+                <div style="flex:1;">
+                  <div style="font-size:13px;">
+                    <span style="color:#607080;">Current Aid: </span><strong>Wheelchair</strong><span style="color:#607080;margin:0 12px;">|</span>
+                    <span style="color:#607080;">Issued: </span><strong>15 Feb 2026</strong><span style="color:#607080;margin:0 12px;">|</span>
+                    <span style="color:#607080;">Status: </span><strong style="color:#2e7d32;">Temporary</strong>
+                  </div>
+                  <div class="patient-bar" style="margin-top:8px;">
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.7;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.85;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.55;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.9;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.4;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.65;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.8;"></div>
+                    <div class="pb-fill" style="background:linear-gradient(90deg,#1976d2,#43a047);opacity:.5;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-blue">Status &amp; Prediction</div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px;">
+                <span style="font-weight:600;">Monthly Verification:</span>
+                <span class="pill pill-active"><span class="pill-dot"></span>Active</span>
+                <span style="color:#607080;">| Next Review:</span><strong style="color:#1976d2;">15 May 2026</strong>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;flex-wrap:wrap;">
+                <span style="font-weight:600;">Prediction:</span><span style="color:#fb8c00;font-weight:700;">Temporary Aid</span>
+                <span style="color:#607080;">|</span><span style="color:#607080;">Review in 2 Months</span>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-outline">Override Status</button>
+                <!-- Modal 1: Dashboard update → navigates to Provision after save -->
+                <button class="btn btn-success" onclick="openModal1()">Update Progress</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-teal">Retrieval Alerts</div>
+            <div class="card-body">
+              <div class="retrieval-row">
+                <span style="font-size:16px;">✅</span><span class="retrieval-label">Recovery Confirmed</span>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;" onclick="navTo('retrieval-alerts','red')">Retrieve</button>
+                  <button class="btn btn-success" style="font-size:11px;padding:4px 12px;" onclick="openModal('modal-schedule-pickup')">Schedule Pickup</button>
+                  <button class="btn btn-gray" style="font-size:11px;padding:4px 12px;">Hold Review</button>
+                </div>
+              </div>
+              <div class="retrieval-row">
+                <span style="font-size:16px;">✅</span><span class="retrieval-label">Transition to Walking Aid</span>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;" onclick="navTo('retrieval-alerts','red')">Retrieve</button>
+                  <button class="btn btn-success" style="font-size:11px;padding:4px 12px;" onclick="openModal('modal-schedule-pickup')">Schedule Pickup</button>
+                </div>
+              </div>
+              <div class="retrieval-row">
+                <span style="font-size:16px;">❌</span><span class="retrieval-label">Case Closure</span>
+                <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;" onclick="navTo('retrieval-alerts','red')">Retrieve</button>
+              </div>
+              <div class="retrieval-row" style="border-bottom:none;">
+                <span style="font-size:16px;">❌</span><span class="retrieval-label">No Update (60 Days)</span>
+                <button class="btn btn-primary" style="font-size:11px;padding:4px 12px;" onclick="navTo('retrieval-alerts','red')">Retrieve</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-teal">Refurbishment &amp; Reallocation</div>
+            <table><thead class="realloc-head"><tr><th>Equipment Retrieved</th><th>Safety Inspection</th><th>Refurbished &amp; Certified</th><th>Certified to New OB</th></tr></thead>
+            <tbody><tr>
+              <td>10 April 2026</td>
+              <td><span style="color:#2e7d32;font-weight:600;">✅ Inspection Complete</span></td>
+              <td><span style="color:#1976d2;font-weight:600;">Certified for Use</span></td>
+              <td><button class="btn btn-success" style="font-size:11px;" onclick="openModal('modal-allocate')">Allocate Now</button></td>
+            </tr></tbody></table>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="sec-header sec-green">Sustainability Impact</div>
+            <div class="card-body">
+              <div class="impact-item"><div class="impact-icon" style="background:#2e7d32;">♻</div><div><div class="impact-lbl">Plastic Waste Reduced</div><div class="impact-val" style="color:#2e7d32;">1,250 kg</div></div></div>
+              <div class="impact-item"><div class="impact-icon" style="background:#1565c0;">$</div><div><div class="impact-lbl">Procurement Savings</div><div class="impact-val" style="color:#1565c0;">RM 150,000</div></div></div>
+              <div class="impact-item" style="margin-bottom:0;"><div class="impact-icon" style="background:#00796b;">🔄</div><div><div class="impact-lbl">Units Reallocated</div><div class="impact-val" style="color:#00796b;">85 units</div></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-header sec-blue">Zone Quick View</div>
+            <div style="padding:10px 14px;"><div id="zone-quick-view"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDICAL AID PROVISION -->
+    <div id="page-provision" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | HUS | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+
+      <!-- FIX 5: single display:none, uses class-based show -->
+      <div id="provision-update-banner" class="success-banner">
+        <span style="font-size:20px;">✅</span>
+        <div>
+          <div style="font-weight:700;color:#1b5e20;font-size:13px;" id="provision-banner-title">Record Updated Successfully</div>
+          <div style="font-size:12px;color:#388e3c;" id="provision-banner-sub"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-header sec-blue">OB Medical Aid Provision — Medical Aid Lifecycle</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Filter:</span>
+          <select id="provision-zone-filter" onchange="renderProvisionTable()"><option>All</option><option>Central</option><option>North</option><option>East Coast</option></select>
+          <select id="provision-aid-filter" onchange="renderProvisionTable()"><option>All</option><option>Wheelchair</option><option>Oxygen Concentrator</option><option>Hospital Bed</option><option>Hoist</option><option>Commode</option><option>Crutches</option></select>
+          <span id="provision-count" style="margin-left:auto;font-size:12px;color:#607080;"></span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="provision-table">
+            <thead><tr><th>OB ID</th><th>Name</th><th>Medical Aid</th><th>Zone / Office</th><th>Issued</th><th>Duration</th><th>OB Status</th><th>AI Prediction</th><th>Retrieval Status</th><th>Action</th></tr></thead>
+            <tbody id="provision-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- REFURBISHMENT STATUS -->
+    <div id="page-refurbishment" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-blue"><div class="s-label">Active OBs</div><div class="s-val">235</div><div class="s-sub">ILAT | HUK | HUS | RTW</div></div>
+        <div class="stat-card stat-teal"><div class="s-label">Medical Aids Issued</div><div class="s-val">1,540</div><div class="s-sub">Total in circulation</div></div>
+        <div class="stat-card stat-orange"><div class="s-label">Retrieval Alerts</div><div class="s-val">28</div><div class="s-sub">This Month</div></div>
+        <div class="stat-card stat-green"><div class="s-label">Units Refurbished</div><div class="s-val">120</div><div class="s-sub">Available</div></div>
+      </div>
+      <div class="zone-grid" id="refurb-zone-cards"></div>
+      <div class="card">
+        <div class="sec-header sec-teal">Active Refurbishment Jobs</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Zone:</span>
+          <select id="refurb-zone-filter" onchange="renderRefurbTable()"><option>All</option><option>Central</option><option>North</option><option>East Coast</option></select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="teal-head">
+            <thead><tr><th>Job ID</th><th>Medical Aid</th><th>From Office</th><th>Zone</th><th>Rehab Centre / Supplier</th><th>Progress</th><th>ETA</th><th>Status</th></tr></thead>
+            <tbody id="refurb-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RETRIEVAL ALERTS -->
+    <div id="page-retrieval-alerts" class="page">
+      <div class="stat-grid">
+        <div class="stat-card stat-red"><div class="s-label">🔴 Red — Urgent</div><div class="s-val" id="tl-count-red">4</div><div class="s-sub">Immediate action</div></div>
+        <div class="stat-card stat-yellow"><div class="s-label">🟡 Yellow — Supervise</div><div class="s-val" id="tl-count-yellow">1</div><div class="s-sub">Review due within 30 days</div></div>
+        <div class="stat-card stat-lime"><div class="s-label">🟢 Green — On Track</div><div class="s-val" id="tl-count-green">1</div><div class="s-sub">New OB / &gt;3 months remaining</div></div>
+        <div class="stat-card stat-blue"><div class="s-label">Total OBs Monitored</div><div class="s-val">6</div><div class="s-sub">All zones</div></div>
+      </div>
+      <!-- FIX 5: uses class-based show -->
+      <div id="pickup-banner" class="info-banner">
+        <span style="font-size:20px;">📅</span>
+        <div>
+          <div style="font-weight:700;color:#1565c0;font-size:13px;">Pickup Scheduled Successfully</div>
+          <div style="font-size:12px;color:#1976d2;" id="pickup-banner-details"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-header sec-red">🚦 Retrieval Alert — Traffic Light System</div>
+        <div class="tl-legend">
+          <strong style="font-size:11px;color:#1a2a3a;">LEGEND:</strong>
+          <div class="tl-legend-item"><div class="tl-light tl-light-red"></div><strong style="color:#c62828;">RED</strong> — Case manager MUST contact OB immediately.</div>
+          <div class="tl-legend-item"><div class="tl-light tl-light-yellow"></div><strong style="color:#e65100;">YELLOW</strong> — Close supervision. Review due within 30 days.</div>
+          <div class="tl-legend-item"><div class="tl-light tl-light-green"></div><strong style="color:#2e7d32;">GREEN</strong> — OB is new / still has &gt;3 months before review.</div>
+        </div>
+        <div class="filter-tabs">
+          <span class="filter-tab active-all" id="tl-tab-all" onclick="filterTL('all')">All (6)</span>
+          <span class="filter-tab" id="tl-tab-red" onclick="filterTL('red')">🔴 Red (4)</span>
+          <span class="filter-tab" id="tl-tab-yellow" onclick="filterTL('yellow')">🟡 Yellow (1)</span>
+          <span class="filter-tab" id="tl-tab-green" onclick="filterTL('green')">🟢 Green (1)</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="red-head"><thead><tr>
+            <th>Status</th><th>OB ID</th><th>Name</th><th>Medical Aid</th><th>Zone / Office</th>
+            <th>Last Update</th><th>Next Review</th><th>Alert Reason</th><th>Action Required</th><th>Case Manager Action</th>
+          </tr></thead><tbody id="tl-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUSTAINABILITY TRACKER -->
+    <div id="page-sustainability" class="page">
+      <div class="sustain-hero">
+        <div class="sustain-hero-title">🌿 INSPIRE Sustainability Tracker — Medical Aid Reuse Impact</div>
+        <div class="sustain-hero-sub">Every refurbished unit = CO₂ avoided + manufacturing waste saved + procurement cost reduced.</div>
+        <div class="sustain-hero-stats">
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">2,847 kg</div><div class="sustain-hero-lbl">Total CO₂ Saved</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">1,250 kg</div><div class="sustain-hero-lbl">Mfg Waste Avoided</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">418,432 km</div><div class="sustain-hero-lbl">Shipping Avoided</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">85 units</div><div class="sustain-hero-lbl">Reallocated This Year</div></div>
+          <div class="sustain-hero-stat"><div class="sustain-hero-val">RM 150,000</div><div class="sustain-hero-lbl">Procurement Saved</div></div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#607080;margin-bottom:10px;">SUSTAINABILITY IMPACT PER MEDICAL AID TYPE — Per Reused Unit</div>
+      <div class="sustain-grid" id="sustain-aid-cards"></div>
+      <div class="card">
+        <div class="sec-header sec-green">♻ Medical Aid Reuse Lifecycle</div>
+        <div class="card-body">
+          <div class="sustain-timeline">
+            <div class="st-node"><div class="st-circle st-active">🏭</div><div class="st-label">Manufacture</div></div>
+            <div class="st-node"><div class="st-circle st-active">🚢</div><div class="st-label">Ship to MY</div></div>
+            <div class="st-node"><div class="st-circle st-active">🏥</div><div class="st-label">Issue to OB</div></div>
+            <div class="st-node"><div class="st-circle st-active">🔄</div><div class="st-label">Refurbish</div></div>
+            <div class="st-node"><div class="st-circle st-active">✅</div><div class="st-label">Reallocate</div></div>
+            <div class="st-node"><div class="st-circle">🔁</div><div class="st-label">Next Cycle</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-header sec-green">📋 Sustainability Data — All Refurbished Units</div>
+        <div class="filter-bar">
+          <span style="font-size:12px;color:#607080;font-weight:600;">Filter by Aid:</span>
+          <select id="sustain-filter" onchange="renderSustainTable()"><option>All</option><option>Wheelchair</option><option>Hospital Bed</option><option>Oxygen Concentrator</option><option>Commode</option><option>Crutches</option></select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="teal-head">
+            <thead><tr><th>Aid Type</th><th>Model</th><th>Manufacturer</th><th>Origin → Malaysia</th><th>Distance</th><th>Weight</th><th>CO₂ Saved / Unit</th><th>Waste Avoided</th><th>Units Reused</th><th>Total CO₂ Saved</th></tr></thead>
+            <tbody id="sustain-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #content -->
+  <div id="footer">
+    <span>INSPIRE v2.1 · PERKESO Medical Aid Lifecycle Management System</span>
+    <span>Prototype · PILLAR 2025 (Alyaa, Amira &amp; Danial)</span>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CORE DATA
+// ═══════════════════════════════════════════
+const ZONES = {
+  "Central":    { color:"#1565c0", offices:["Putrajaya","Kuala Lumpur","Petaling Jaya","Klang","Melaka","Muar"], centre:"Pusat Rehab PERKESO Melaka" },
+  "North":      { color:"#00796b", offices:["Ipoh","Pulau Pinang","Alor Setar"], centre:"Pusat Rehab PERKESO Ipoh" },
+  "East Coast": { color:"#e65100", offices:["Kuantan","Kota Bharu","Kuala Terengganu"], centre:"Pusat Rehab PERKESO Terengganu" }
+};
+const AID_ICONS = { "Wheelchair":"♿","Oxygen Concentrator":"💨","Hospital Bed":"🛏","Hoist":"⚙","Commode":"🚽","Crutches":"🩼" };
+const OBS = [
+  { id:"OB-2026-0091", name:"Adam Bin Azman",     aid:"Wheelchair",          zone:"Central",    office:"Petaling Jaya", issued:"15 Feb 2026",  status:"Active",   cat:"RTW",  pred:"Temporary",   conf:38,  weeks:6,  daysLeft:60,  lastUpdate:15, reviewDate:"2026-05-15" },
+  { id:"OB-2025-0124", name:"Aqilah Binti Amir",  aid:"Hospital Bed",        zone:"North",      office:"Ipoh",          issued:"10 May 2025",  status:"Active",   cat:"ILAT", pred:"Permanent",   conf:60,  weeks:44, daysLeft:null,lastUpdate:72, reviewDate:"2026-03-20" },
+  { id:"OB-2025-0203", name:"Rajendran A/L Kumar", aid:"Oxygen Concentrator", zone:"Central",    office:"Johor Bahru",   issued:"21 June 2025", status:"Deceased", cat:"ILAT", pred:"Retrievable", conf:100, weeks:38, daysLeft:0,   lastUpdate:14, reviewDate:"2026-02-01" },
+  { id:"OB-2025-0317", name:"Faiqh Leuw",           aid:"Commode",             zone:"East Coast", office:"Kuantan",       issued:"01 Aug 2025",  status:"Active",   cat:"RTW",  pred:"Temporary",   conf:78,  weeks:32, daysLeft:12,  lastUpdate:65, reviewDate:"2026-03-28" },
+  { id:"OB-2026-0445", name:"Nabhan Bin Tarmizi", aid:"Wheelchair",          zone:"Central",    office:"Melaka",        issued:"12 Jan 2026",  status:"Active",   cat:"HUS",  pred:"Temporary",   conf:89,  weeks:9,  daysLeft:20,  lastUpdate:7,  reviewDate:"2026-04-12" },
+  { id:"OB-2026-0012", name:"Ain Binti Hashim",   aid:"Crutches",            zone:"East Coast", office:"Terengganu",    issued:"03 Jan 2026",  status:"Active",   cat:"RTW",  pred:"Temporary",   conf:69,  weeks:10, daysLeft:90,  lastUpdate:5,  reviewDate:"2026-06-03" },
+];
+// warrantyYears: default warranty period per aid type
+const WARRANTY_YEARS = { "Wheelchair":2, "Hospital Bed":2, "Oxygen Concentrator":1, "Hoist":2, "Commode":1, "Crutches":1 };
+
+// isUnderWarranty: true → supplier route, false → internal refurb route
+// issueDate: original date the aid was issued to OB (used to compute warranty expiry)
+// supplierName: who handles warranty claims
+const REFURB = [
+  { id:"RF-2025-001", aid:"Wheelchair",          from:"Putrajaya",  zone:"Central",    centre:"Pusat Rehab PERKESO Melaka",     step:2, eta:"20 May 2026",  issueDate:"2024-02-15", supplierName:"ACARE Medical Sdn Bhd" },
+  { id:"RF-2025-002", aid:"Hospital Bed",        from:"Ipoh",       zone:"North",      centre:"Pusat Rehab PERKESO Ipoh",       step:4, eta:"14 May 2026",  issueDate:"2022-05-10", supplierName:"Standard Medical Supply" },
+  { id:"RF-2025-003", aid:"Oxygen Concentrator", from:"Kota Bharu", zone:"East Coast", centre:"Pusat Rehab PERKESO Terengganu", step:1, eta:"01 June 2026", issueDate:"2025-06-21", supplierName:"ResMed Malaysia Sdn Bhd" },
+  { id:"RF-2025-004", aid:"Hoist",               from:"Kuantan",    zone:"East Coast", centre:"Pusat Rehab PERKESO Terengganu", step:2, eta:"25 May 2026",  issueDate:"2023-08-01", supplierName:"Handicare Malaysia" },
+  { id:"RF-2025-005", aid:"Wheelchair",          from:"Melaka",     zone:"Central",    centre:"Pusat Rehab PERKESO Melaka",     step:5, eta:"12 July 2026", issueDate:"2022-01-12", supplierName:"ACARE Medical Sdn Bhd" },
+];
+
+// Internal refurbishment steps (out of warranty)
+const REFURB_STEPS = ["Received","Cleaning","UV Sterilisation","Inspection","Certified","Ready"];
+// Supplier warranty steps (under warranty)
+const WARRANTY_STEPS = ["Logged","Sent to Supplier","Under Repair","Quality Check","Ready"];
+
+// Helper: compute warranty status for a job
+function getWarrantyInfo(job) {
+  const years = WARRANTY_YEARS[job.aid] || 2;
+  const issued = new Date(job.issueDate);
+  const expiry = new Date(issued);
+  expiry.setFullYear(expiry.getFullYear() + years);
+  const underWarranty = TODAY < expiry;
+  const expiryStr = expiry.toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+  const daysLeft = Math.round((expiry - TODAY) / 86400000);
+  return { underWarranty, expiryStr, daysLeft, years };
+}
+const SUSTAIN_AIDS = [
+  { aid:"Wheelchair", model:"ACARE Wheel Multilight (16\")", manufacturer:"Foshan Achieve Medical Technology Co., Ltd", supplier:"1617 (2025)", origin:"Foshan, China", dest:"Port Klang, Malaysia", distKm:3215, weightKg:12.85, material:"Aluminium alloy frame", mfgCO2perUnit:98.4, shipCO2perUnit:0.45, mfgWasteKg:4.2, unitsReused:42, unitsTotal:85, icon:"♿" },
+  { aid:"Hospital Bed", model:"Hi-Lo Fowler Bed with PU Mattress", manufacturer:"Standard estimate — Steel frame, PU mattress", supplier:"Local / Regional supplier", origin:"China (est.)", dest:"Port Klang, Malaysia", distKm:3400, weightKg:85, material:"Steel frame + PU mattress", mfgCO2perUnit:157.3, shipCO2perUnit:3.18, mfgWasteKg:12.5, unitsReused:18, unitsTotal:85, icon:"🛏" },
+  { aid:"Oxygen Concentrator", model:"Standard 5L Concentrator", manufacturer:"Standard estimate — Electronic medical device", supplier:"Various", origin:"China (est.)", dest:"Port Klang, Malaysia", distKm:3200, weightKg:14, material:"Plastic housing + electronic components", mfgCO2perUnit:112.0, shipCO2perUnit:0.49, mfgWasteKg:3.8, unitsReused:11, unitsTotal:85, icon:"💨" },
+  { aid:"Commode", model:"ACARE Commode", manufacturer:"Standard estimate", supplier:"Various", origin:"China (est.)", dest:"Port Klang, Malaysia", distKm:3200, weightKg:7.5, material:"Steel/aluminium frame", mfgCO2perUnit:23.1, shipCO2perUnit:0.26, mfgWasteKg:1.8, unitsReused:8, unitsTotal:85, icon:"🚽" },
+  { aid:"Crutches", model:"ACARE Crutches (pair)", manufacturer:"Standard estimate — Aluminium", supplier:"Various", origin:"China (est.)", dest:"Port Klang, Malaysia", distKm:3200, weightKg:1.8, material:"Aluminium alloy", mfgCO2perUnit:14.8, shipCO2perUnit:0.06, mfgWasteKg:0.5, unitsReused:6, unitsTotal:85, icon:"🩼" }
+];
+
+// ═══════════════════════════════════════════
+// TRAFFIC LIGHT
+// ═══════════════════════════════════════════
+const TODAY = new Date("2026-03-16");
+function getTLStatus(ob) {
+  const d = Math.round((new Date(ob.reviewDate)-TODAY)/86400000);
+  if (ob.status==="Deceased"||ob.pred==="Retrievable"||ob.lastUpdate>=60||ob.daysLeft===0||d<0) return "red";
+  if (d<=30) return "yellow";
+  return "green";
+}
+function getTLReason(ob) {
+  const d = Math.round((new Date(ob.reviewDate)-TODAY)/86400000);
+  const r=[];
+  if (ob.status==="Deceased") r.push("OB is deceased — aid must be retrieved");
+  if (ob.pred==="Retrievable") r.push("AI prediction: aid retrievable");
+  if (ob.lastUpdate>=60) r.push(`No OB update for ${ob.lastUpdate} days`);
+  if (ob.daysLeft===0) r.push("Aid overdue for return");
+  if (d<0) r.push(`Review date passed (${ob.reviewDate})`);
+  if (d>=0&&d<=30) r.push(`Review due in ${d} days`);
+  if (r.length===0) r.push("On track — no action needed");
+  return r;
+}
+function getTLAction(s) {
+  if (s==="red")    return "Contact OB immediately. Initiate retrieval process if unresponsive.";
+  if (s==="yellow") return "Schedule follow-up call. Review aid usage within 30 days.";
+  return "Monitor passively. Next scheduled review applies.";
+}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let expandedOB = null, refurbZoneFilter="All", tlFilter="all", tlActionLogs={};
+// Tracks which OB is being edited in Modal 4
+let activeModal4ObId = null;
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+document.querySelectorAll('.nav-item').forEach(el =>
+  el.addEventListener('click', () => navTo(el.dataset.page, ''))
+);
+function navTo(pageId, subFilter) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const navEl = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+  if (navEl) navEl.classList.add('active');
+  const pageEl = document.getElementById('page-'+pageId);
+  if (pageEl) pageEl.classList.add('active');
+  if (pageId==='retrieval-alerts'&&subFilter) { tlFilter=subFilter; renderTLTable(); updateTLTabs(); }
+  document.getElementById('content').scrollTop = 0;
+}
+
+// ═══════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════
+function openModal(id) {
+  const today = new Date().toISOString().split('T')[0];
+  const todayFmt = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+  if (id==='modal-schedule-pickup') {
+    document.getElementById('sp-date').value=today;
+    document.getElementById('sp-address').value='';
+    document.getElementById('sp-phone').value='';
+    document.getElementById('sp-notes').value='';
+  }
+  if (id==='modal-allocate') {
+    document.getElementById('al-date').value=today;
+    document.getElementById('al-ob-id').value='';
+    document.getElementById('al-name').value='';
+    document.getElementById('al-notes').value='';
+  }
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o =>
+  o.addEventListener('click', e => { if(e.target===o) closeModal(o.id); })
+);
+
+// ── Modal 1 opener (Dashboard Update Progress) ──
+function openModal1() {
+  const todayFmt = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('m1-date').value = todayFmt;
+  document.getElementById('m1-review-date').value='';
+  document.getElementById('m1-notes').value='';
+  document.getElementById('m1-progress').value='';
+  document.getElementById('m1-status').value='Active';
+  document.getElementById('m1-prediction').value='Temporary';
+  document.getElementById('modal-update-progress').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+// ── Modal 4 opener (Provision page "Update" button) ──
+// Receives the OB object so we can pre-fill and track which OB to update
+function openProvisionUpdateModal(obId) {
+  const ob = OBS.find(o=>o.id===obId);
+  if (!ob) return;
+  activeModal4ObId = obId;
+
+  // Fill dynamic info block
+  document.getElementById('m4-subtitle').textContent = `Updating progress for ${ob.name}`;
+  document.getElementById('m4-info-row1').innerHTML = `<strong>OB:</strong> ${ob.name} &nbsp;|&nbsp; <strong>ID:</strong> ${ob.id}`;
+  document.getElementById('m4-info-row2').innerHTML = `<strong>Aid:</strong> ${AID_ICONS[ob.aid]||'🩺'} ${ob.aid} &nbsp;|&nbsp; <strong>Issued:</strong> ${ob.issued} &nbsp;|&nbsp; <strong>Current Status:</strong> ${ob.status} / ${ob.pred}`;
+
+  // Pre-fill with current values
+  document.getElementById('m4-status').value = ob.status;
+  document.getElementById('m4-prediction').value = ob.pred;
+  document.getElementById('m4-review-date').value = ob.reviewDate;
+  document.getElementById('m4-progress').value = '';
+  document.getElementById('m4-notes').value = '';
+  document.getElementById('m4-date').value = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+
+  document.getElementById('modal-provision-update').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg, color='#2e7d32') {
+  const t=document.createElement('div');
+  t.className='toast'; t.style.background=color;
+  t.innerHTML=`<span>✅</span> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+function showBanner(bannerId, titleId, subId, title, sub) {
+  document.getElementById(titleId).textContent=title;
+  document.getElementById(subId).textContent=sub;
+  document.getElementById(bannerId).style.display='flex';
+}
+
+// ═══════════════════════════════════════════
+// MODAL 1 SUBMIT — Dashboard → Provision page
+// ═══════════════════════════════════════════
+function submitModal1() {
+  const status=document.getElementById('m1-status').value;
+  const pred=document.getElementById('m1-prediction').value;
+  const reviewDate=document.getElementById('m1-review-date').value;
+  const notes=document.getElementById('m1-notes').value;
+  if (!reviewDate) { alert('Please enter a Next Review Date.'); return; }
+
+  const ob=OBS.find(o=>o.id==='OB-2026-0091');
+  if (ob) { ob.status=status; ob.pred=pred; ob.reviewDate=reviewDate; }
+
+  closeModal('modal-update-progress');
+  showToast('Progress saved! Navigating to Provision page…');
+
+  setTimeout(()=>{
+    navTo('provision','');
+    renderProvisionTable();
+    showBanner('provision-update-banner','provision-banner-title','provision-banner-sub',
+      `Progress updated for Adam Bin Azman (OB-2026-0091)`,
+      `Status: ${status} | Prediction: ${pred} | Next Review: ${reviewDate}${notes?' | Note: '+notes:''}`
+    );
+    setTimeout(()=>{
+      document.querySelectorAll('#provision-tbody tr').forEach(row=>{
+        if (row.textContent.includes('OB-2026-0091')) {
+          row.style.background='#fffde7'; row.style.transition='background 1s';
+          setTimeout(()=>row.style.background='',2500);
+        }
+      });
+    },100);
+  },350);
+}
+
+// ═══════════════════════════════════════════
+// MODAL 4 SUBMIT — Provision page, stays on Provision
+// Updates the OB row in-place, shows banner, highlights row
+// ═══════════════════════════════════════════
+function submitModal4() {
+  const status=document.getElementById('m4-status').value;
+  const pred=document.getElementById('m4-prediction').value;
+  const reviewDate=document.getElementById('m4-review-date').value;
+  const notes=document.getElementById('m4-notes').value;
+  if (!reviewDate) { alert('Please enter a Next Review Date.'); return; }
+  if (!activeModal4ObId) return;
+
+  const ob=OBS.find(o=>o.id===activeModal4ObId);
+  if (ob) { ob.status=status; ob.pred=pred; ob.reviewDate=reviewDate; }
+
+  const obName = ob ? ob.name : activeModal4ObId;
+  closeModal('modal-provision-update');
+  showToast(`${obName} — progress updated!`);
+  renderProvisionTable();
+
+  showBanner('provision-update-banner','provision-banner-title','provision-banner-sub',
+    `Progress updated for ${obName} (${activeModal4ObId})`,
+    `Status: ${status} | Prediction: ${pred} | Next Review: ${reviewDate}${notes?' | Note: '+notes:''}`
+  );
+
+  // Highlight updated row
+  setTimeout(()=>{
+    document.querySelectorAll('#provision-tbody tr').forEach(row=>{
+      if (row.textContent.includes(activeModal4ObId)) {
+        row.style.background='#fffde7'; row.style.transition='background 1s';
+        setTimeout(()=>row.style.background='',2500);
+      }
+    });
+  },100);
+  activeModal4ObId=null;
+}
+
+// ═══════════════════════════════════════════
+// SCHEDULE PICKUP SUBMIT
+// ═══════════════════════════════════════════
+function submitSchedulePickup() {
+  const date=document.getElementById('sp-date').value;
+  const time=document.getElementById('sp-time').value;
+  const address=document.getElementById('sp-address').value;
+  const reason=document.getElementById('sp-reason').value;
+  const method=document.getElementById('sp-method').value;
+  if (!date||!address) { alert('Please fill in Pickup Date and Address.'); return; }
+  const fmtDate=new Date(date).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+  tlActionLogs['OB-2026-0091']=`Pickup scheduled — ${fmtDate} | ${time} | Reason: ${reason} | Address: ${address}`;
+  closeModal('modal-schedule-pickup');
+  showToast('Pickup scheduled! Navigating to Retrieval Alerts…','#1565c0');
+  setTimeout(()=>{
+    navTo('retrieval-alerts','red'); renderTLTable();
+    showBanner('pickup-banner','pickup-banner-details','pickup-banner-details',
+      'Pickup Scheduled Successfully',
+      `OB: Adam Bin Azman | Aid: ♿ Wheelchair | Pickup: ${fmtDate}, ${time} | Method: ${method} | Reason: ${reason}`
+    );
+    document.getElementById('pickup-banner').querySelector('div div:first-child').textContent='Pickup Scheduled Successfully';
+    setTimeout(()=>{
+      document.querySelectorAll('#tl-tbody tr').forEach(row=>{
+        if (row.textContent.includes('OB-2026-0091')) {
+          row.style.outline='2px solid #1976d2';
+          setTimeout(()=>row.style.outline='',2500);
+        }
+      });
+    },100);
+  },350);
+}
+
+// ═══════════════════════════════════════════
+// ALLOCATE SUBMIT
+// ═══════════════════════════════════════════
+function submitAllocate() {
+  const obId=document.getElementById('al-ob-id').value.trim();
+  const name=document.getElementById('al-name').value.trim();
+  const cat=document.getElementById('al-cat').value;
+  const zone=document.getElementById('al-zone').value;
+  const office=document.getElementById('al-office').value;
+  const date=document.getElementById('al-date').value;
+  const pred=document.getElementById('al-prediction').value;
+  const notes=document.getElementById('al-notes').value;
+  if (!obId||!name||!date) { alert('Please fill in OB ID, Full Name, and Allocation Date.'); return; }
+  const fmtDate=new Date(date).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+  OBS.unshift({ id:obId, name, aid:"Wheelchair", zone, office, issued:fmtDate, status:"Active", cat, pred, conf:45, weeks:0, daysLeft:90, lastUpdate:0,
+    reviewDate:new Date(new Date(date).setMonth(new Date(date).getMonth()+3)).toISOString().split('T')[0] });
+  closeModal('modal-allocate');
+  showToast('Aid allocated! Navigating to Provision page…');
+  setTimeout(()=>{
+    navTo('provision',''); renderProvisionTable();
+    showBanner('provision-update-banner','provision-banner-title','provision-banner-sub',
+      `New allocation created — ${name} (${obId})`,
+      `Aid: ♿ Wheelchair | Zone: ${zone} | Office: ${office} | Issued: ${fmtDate}${notes?' | '+notes:''}`
+    );
+    setTimeout(()=>{
+      const rows=document.querySelectorAll('#provision-tbody tr');
+      if (rows[0]) { rows[0].style.background='#e8f5e9'; rows[0].style.transition='background 1s'; setTimeout(()=>rows[0].style.background='',2500); }
+    },100);
+  },350);
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function pillHtml(label) {
+  const map={"Active":"active","Recovered":"recovered","Deceased":"deceased","Temporary":"temporary","Permanent":"permanent","Retrievable":"retrievable","Ready":"ready","Certified":"certified","Received":"received","In Progress":"inprogress"};
+  return `<span class="pill pill-${map[label]||'gray'}"><span class="pill-dot"></span>${label}</span>`;
+}
+function weekBarHtml(weeks,max=104) {
+  const p=Math.min((weeks/max)*100,100), col=p<40?"#43a047":p<70?"#ffa000":"#ef5350";
+  return `<div style="font-size:10px;color:#607080;margin-bottom:3px;">${weeks} wks elapsed</div><div class="prog-wrap"><div class="prog-bar" style="width:${p}%;background:${col};"></div></div>`;
+}
+function confBarHtml(val) {
+  const col=val>85?"#2e7d32":val>70?"#1976d2":"#f57f17";
+  return `<div class="conf-wrap"><div class="conf-bar"><div class="conf-fill" style="width:${val}%;background:${col};"></div></div><span style="font-size:11px;font-weight:700;color:${col};min-width:32px;">${val}%</span></div>`;
+}
+// Render step progress bar — switches steps based on warranty status
+// Under warranty → shorter supplier flow (purple)
+// Out of warranty → full internal refurb flow (blue)
+function stepsHtml(step, underWarranty) {
+  const steps    = underWarranty ? WARRANTY_STEPS : REFURB_STEPS;
+  const color    = underWarranty ? "#7c4dff" : "#1976d2";
+  const doneCol  = underWarranty ? "#4527a0" : "#2e7d32";
+  const safeStep = Math.min(step, steps.length - 1);
+
+  // Route badge shown above the steps
+  const badge = underWarranty
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#ede7f6;color:#4527a0;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:5px;">🔧 Under Warranty — Supplier</span>`
+    : `<span style="display:inline-flex;align-items:center;gap:4px;background:#e3f2fd;color:#1565c0;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:5px;">⚙ Out of Warranty — Internal Refurb</span>`;
+
+  let h = `<div>${badge}</div><div class="steps-row">`;
+  steps.forEach((s, i) => {
+    const isDone   = i < safeStep;
+    const isActive = i === safeStep;
+    let circleStyle = '';
+    if (isDone)        circleStyle = `background:${doneCol};border-color:${doneCol};color:#fff;`;
+    else if (isActive) circleStyle = `background:${color};border-color:${color};color:#fff;`;
+    h += `<div class="step-circle" style="${circleStyle}" title="${s}">${isDone ? "✓" : i + 1}</div>`;
+    if (i < steps.length - 1) h += `<div class="step-line ${isDone ? "done" : ""}"></div>`;
+  });
+  return h + `</div><div style="font-size:10px;color:${color};font-weight:600;margin-top:4px;">${steps[safeStep]}</div>`;
+}
+
+// ═══════════════════════════════════════════
+// PROVISION TABLE
+// "Update" button now calls openProvisionUpdateModal(ob.id)
+// ═══════════════════════════════════════════
+function renderProvisionTable() {
+  const zf=document.getElementById('provision-zone-filter').value;
+  const af=document.getElementById('provision-aid-filter').value;
+  const rows=OBS.filter(o=>(zf==="All"||o.zone===zf)&&(af==="All"||o.aid===af));
+  document.getElementById('provision-count').textContent=rows.length+" records";
+  const tbody=document.getElementById('provision-tbody');
+  tbody.innerHTML="";
+  rows.forEach(ob=>{
+    const isRetrievable=ob.status==="Recovered"||ob.status==="Deceased";
+    const tr=document.createElement('tr');
+    tr.style.cursor="pointer";
+    tr.innerHTML=`
+      <td style="color:#1976d2;font-weight:600;">${ob.id}</td>
+      <td style="font-weight:600;">${ob.name}</td>
+      <td>${AID_ICONS[ob.aid]||"🩺"} ${ob.aid}</td>
+      <td><div style="font-weight:600;">${ob.zone}</div><div style="color:#607080;font-size:11px;">${ob.office}</div></td>
+      <td style="color:#607080;">${ob.issued}</td>
+      <td style="min-width:130px;">${weekBarHtml(ob.weeks)}</td>
+      <td>${pillHtml(ob.status)}</td>
+      <td>${pillHtml(ob.pred)}</td>
+      <td style="min-width:120px;">${confBarHtml(ob.conf)}</td>
+      <td>${isRetrievable
+        ? `<button class="btn btn-orange" style="font-size:11px;" onclick="triggerRetrieve(this,'${ob.id}')">🔄 Retrieve</button>`
+        : `<button class="btn btn-outline" style="font-size:11px;" onclick="openProvisionUpdateModal('${ob.id}')">✏️ Update</button>`
+      }</td>`;
+    tr.addEventListener('click',e=>{ if(e.target.tagName==="BUTTON") return; toggleExpand(ob); });
+    tbody.appendChild(tr);
+    const expTr=document.createElement('tr');
+    expTr.id="exp-"+ob.id; expTr.style.display="none";
+    const dd=ob.daysLeft===0?"⚠ Eligible for Retrieval":ob.daysLeft===null?"Ongoing":ob.daysLeft+" days";
+    const dc=ob.daysLeft===0?"#c62828":"#1a2a3a";
+    expTr.innerHTML=`<td colspan="10" style="padding:0 12px 12px;background:#e8f0fe;"><div class="expand-inner">
+      <div class="expand-box"><div class="expand-lbl">Category</div><div class="expand-val">${ob.cat}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Days Remaining</div><div class="expand-val" style="color:${dc};">${dd}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Rehab Centre</div><div class="expand-val" style="font-size:11px;">${ZONES[ob.zone]?.centre||"-"}</div></div>
+      <div class="expand-box"><div class="expand-lbl">Next Review</div><div class="expand-val">${ob.reviewDate}</div></div>
+    </div></td>`;
+    tbody.appendChild(expTr);
+  });
+}
+function toggleExpand(ob) {
+  const r=document.getElementById("exp-"+ob.id);
+  if(expandedOB===ob.id){r.style.display="none";expandedOB=null;}
+  else{document.querySelectorAll('[id^="exp-"]').forEach(x=>x.style.display="none");r.style.display="";expandedOB=ob.id;}
+}
+function triggerRetrieve(btn,id) {
+  btn.textContent="✓ Initiated"; btn.classList.remove("btn-orange"); btn.classList.add("btn-gray"); btn.disabled=true;
+}
+
+// ═══════════════════════════════════════════
+// REFURBISHMENT
+// ═══════════════════════════════════════════
+function renderRefurbZoneCards() {
+  const c=document.getElementById('refurb-zone-cards'); c.innerHTML="";
+  Object.entries(ZONES).forEach(([zone,d])=>{
+    const jobs=REFURB.filter(j=>j.zone===zone);
+    const maxStep = s => getWarrantyInfo(s).underWarranty ? WARRANTY_STEPS.length-1 : REFURB_STEPS.length-1;
+    const ready=jobs.filter(j=>j.step>=maxStep(j)).length;
+    const inprog=jobs.filter(j=>j.step<maxStep(j)).length;
+    const isA=refurbZoneFilter===zone;
+    const div=document.createElement('div');
+    div.className="zone-card"+(isA?" active":"");
+    div.style.borderColor=isA?d.color:"#dde6f0"; div.style.background=isA?d.color+"12":"#fff";
+    div.innerHTML=`<div class="zone-card-title"><div class="zone-dot" style="background:${d.color};"></div>${zone} Zone</div>
+      <div class="zone-centre">🏥 ${d.centre}</div>
+      <div class="zone-counts">
+        <div class="zone-count-box" style="background:#fff8e1;"><div class="zone-count-val" style="color:#ffa000;">${inprog}</div><div class="zone-count-lbl">In Progress</div></div>
+        <div class="zone-count-box" style="background:#e8f5e9;"><div class="zone-count-val" style="color:#2e7d32;">${ready}</div><div class="zone-count-lbl">Ready</div></div>
+      </div>`;
+    div.addEventListener('click',()=>{ refurbZoneFilter=isA?"All":zone; document.getElementById('refurb-zone-filter').value=refurbZoneFilter; renderRefurbZoneCards(); renderRefurbTable(); });
+    c.appendChild(div);
+  });
+}
+
+function renderRefurbTable() {
+  const zf=document.getElementById('refurb-zone-filter').value; refurbZoneFilter=zf; renderRefurbZoneCards();
+  const rows=REFURB.filter(j=>zf==="All"||j.zone===zf);
+  const tbody=document.getElementById('refurb-tbody'); tbody.innerHTML="";
+  rows.forEach(job=>{
+    const zc=ZONES[job.zone]?.color||"#1976d2";
+    const wInfo=getWarrantyInfo(job);
+    const steps=wInfo.underWarranty?WARRANTY_STEPS:REFURB_STEPS;
+    const safeStep=Math.min(job.step, steps.length-1);
+    // Status label from current step
+    const statusLabel = safeStep>=steps.length-1 ? "Ready"
+      : safeStep>=3 ? (wInfo.underWarranty?"Under Repair":"Certified")
+      : safeStep>=1 ? "In Progress"
+      : wInfo.underWarranty ? "Logged" : "Received";
+    // Destination column: show supplier name if under warranty, else rehab centre
+    const dest = wInfo.underWarranty
+      ? `<div style="font-size:11px;color:#4527a0;font-weight:600;">🔧 ${job.supplierName}</div>`
+      : `<div style="font-size:11px;color:#607080;">🏥 ${job.centre}</div>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="color:#1976d2;font-weight:600;">${job.id}</td>
+      <td>${AID_ICONS[job.aid]||"🩺"} ${job.aid}</td>
+      <td>${job.from}</td>
+      <td><span class="pill-zone" style="background:${zc}18;color:${zc};">${job.zone}</span></td>
+      <td>${dest}</td>
+      <td style="min-width:280px;">${stepsHtml(job.step, wInfo.underWarranty)}</td>
+      <td style="color:#607080;">${job.eta}</td>
+      <td>${pillHtml(statusLabel)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ═══════════════════════════════════════════
+// TRAFFIC LIGHT TABLE
+// ═══════════════════════════════════════════
+function filterTL(f){tlFilter=f;renderTLTable();updateTLTabs();}
+function updateTLTabs(){
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active-all','active-red','active-yellow','active-green'));
+  const m={all:'active-all',red:'active-red',yellow:'active-yellow',green:'active-green'};
+  const el=document.getElementById('tl-tab-'+tlFilter); if(el) el.classList.add(m[tlFilter]);
+}
+function renderTLTable(){
+  const tbody=document.getElementById('tl-tbody'); tbody.innerHTML="";
+  OBS.filter(ob=>tlFilter==="all"||getTLStatus(ob)===tlFilter).forEach(ob=>{
+    const status=getTLStatus(ob), reasons=getTLReason(ob), action=getTLAction(status);
+    const d=Math.round((new Date(ob.reviewDate)-TODAY)/86400000);
+    const rd=d<0?`<span style="color:#c62828;font-weight:700;">⚠ ${Math.abs(d)}d overdue</span>`:`${ob.reviewDate} <span style="color:#607080;">(${d}d)</span>`;
+    const pm={
+      red:`<span class="tl-pill tl-pill-red"><span style="width:8px;height:8px;border-radius:50%;background:#ef5350;display:inline-block;box-shadow:0 0 6px rgba(239,83,80,0.8);"></span>RED</span>`,
+      yellow:`<span class="tl-pill tl-pill-yellow"><span style="width:8px;height:8px;border-radius:50%;background:#ffa000;display:inline-block;"></span>YELLOW</span>`,
+      green:`<span class="tl-pill tl-pill-green"><span style="width:8px;height:8px;border-radius:50%;background:#43a047;display:inline-block;"></span>GREEN</span>`
+    };
+    const tr=document.createElement('tr'); tr.className="alert-row-"+status;
+    tr.innerHTML=`<td>${pm[status]}</td>
+      <td style="color:#1976d2;font-weight:600;white-space:nowrap;">${ob.id}</td>
+      <td style="font-weight:600;">${ob.name}</td>
+      <td>${AID_ICONS[ob.aid]||"🩺"} ${ob.aid}</td>
+      <td><div style="font-weight:600;">${ob.zone}</div><div style="color:#607080;font-size:11px;">${ob.office}</div></td>
+      <td style="color:${ob.lastUpdate>=60?"#c62828":"#607080"};font-weight:${ob.lastUpdate>=60?"700":"400"};">${ob.lastUpdate}d ago</td>
+      <td style="min-width:140px;">${rd}</td>
+      <td style="min-width:180px;">${reasons.map(r=>`<div style="font-size:11px;color:${status==='red'?"#c62828":status==='yellow'?"#e65100":"#2e7d32"};margin-bottom:2px;">• ${r}</div>`).join('')}</td>
+      <td style="min-width:180px;font-size:11px;">${action}</td>
+      <td style="min-width:200px;"><div style="display:flex;flex-direction:column;gap:4px;">
+        ${status==='red'
+          ?`<button class="btn btn-red"    style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','contacted')">📞 Mark Contacted</button>
+             <button class="btn btn-orange" style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','retrieve')">🔄 Initiate Retrieval</button>`
+          :status==='yellow'
+          ?`<button class="btn btn-primary" style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','scheduled')">📅 Schedule Review</button>
+             <button class="btn btn-outline" style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','noted')">📝 Add Note</button>`
+          :`<button class="btn btn-success" style="font-size:10px;padding:3px 10px;" onclick="logAction('${ob.id}','ok')">✅ Confirmed OK</button>`
+        }
+        <div id="log-${ob.id}" class="action-log ${tlActionLogs[ob.id]?'show':''}">
+          ${tlActionLogs[ob.id]?'✅ '+tlActionLogs[ob.id]:''}
+        </div>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+  const rc=OBS.filter(o=>getTLStatus(o)==='red').length;
+  const yc=OBS.filter(o=>getTLStatus(o)==='yellow').length;
+  const gc=OBS.filter(o=>getTLStatus(o)==='green').length;
+  const b=document.getElementById('badge-red'); if(b) b.textContent=rc;
+  ['red','yellow','green'].forEach(c=>{ const el=document.getElementById('tl-count-'+c); if(el) el.textContent=c==='red'?rc:c==='yellow'?yc:gc; });
+  document.getElementById('tl-tab-all').textContent=`All (${OBS.length})`;
+  document.getElementById('tl-tab-red').textContent=`🔴 Red (${rc})`;
+  document.getElementById('tl-tab-yellow').textContent=`🟡 Yellow (${yc})`;
+  document.getElementById('tl-tab-green').textContent=`🟢 Green (${gc})`;
+}
+function logAction(obId,action){
+  const msgs={contacted:"Case manager contacted OB — "+new Date().toLocaleDateString(),retrieve:"Retrieval initiated — "+new Date().toLocaleDateString(),scheduled:"Review scheduled — "+new Date().toLocaleDateString(),noted:"Note added — "+new Date().toLocaleDateString(),ok:"OB confirmed active — "+new Date().toLocaleDateString()};
+  tlActionLogs[obId]=msgs[action]||action; renderTLTable();
+}
+
+// ═══════════════════════════════════════════
+// SUSTAINABILITY
+// ═══════════════════════════════════════════
+function renderSustainCards(){
+  const c=document.getElementById('sustain-aid-cards'); if(!c) return; c.innerHTML="";
+  SUSTAIN_AIDS.forEach(a=>{
+    const tCO2=((a.mfgCO2perUnit+a.shipCO2perUnit)*a.unitsReused).toFixed(1);
+    const tW=(a.mfgWasteKg*a.unitsReused).toFixed(1), tD=(a.distKm*a.unitsReused).toLocaleString();
+    const pct=Math.round((a.unitsReused/a.unitsTotal)*100), isR=a.aid==="Wheelchair";
+    const div=document.createElement('div'); div.className="sustain-aid-card";
+    div.innerHTML=`<div class="sustain-aid-header"><div class="sustain-aid-icon">${a.icon}</div>
+      <div style="flex:1;"><div class="sustain-aid-name">${a.aid}</div><div class="sustain-aid-meta">${a.model}</div></div>
+      ${isR?`<span style="background:#e8f5e9;color:#2e7d32;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">✅ Verified</span>`:`<span style="background:#fff8e1;color:#f57f17;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">📊 Est.</span>`}
+    </div>
+    <div class="sustain-aid-body">
+      <div style="margin-bottom:8px;"><span class="mfr-tag">🏭 ${a.manufacturer.length>40?a.manufacturer.substring(0,38)+'…':a.manufacturer}</span><span class="supplier-tag">📦 ${a.supplier}</span><span class="mfr-tag">📍 ${a.origin}</span></div>
+      <div class="sustain-route">🚢 <strong>${a.origin}</strong> → <strong>${a.dest}</strong> &nbsp;|&nbsp; ${a.distKm.toLocaleString()} km &nbsp;|&nbsp; ${a.weightKg} kg/unit</div>
+      <div class="sustain-metrics">
+        <div class="sustain-metric"><div style="font-size:16px;margin-bottom:3px;">🌫</div><div class="sustain-metric-val" style="color:#1b5e20;">${(a.mfgCO2perUnit+a.shipCO2perUnit).toFixed(1)} kg</div><div class="sustain-metric-lbl">CO₂ / Unit</div></div>
+        <div class="sustain-metric"><div style="font-size:16px;margin-bottom:3px;">🗑</div><div class="sustain-metric-val" style="color:#1565c0;">${a.mfgWasteKg} kg</div><div class="sustain-metric-lbl">Waste / Unit</div></div>
+        <div class="sustain-metric"><div style="font-size:16px;margin-bottom:3px;">🚢</div><div class="sustain-metric-val" style="color:#00796b;">${a.distKm.toLocaleString()} km</div><div class="sustain-metric-lbl">Ship Avoided</div></div>
+      </div>
+      <div style="background:#f9fbe7;border-radius:6px;padding:8px 12px;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:11px;color:#1b5e20;margin-bottom:4px;">Total Impact — ${a.unitsReused} units reused</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;">
+          <span><strong style="color:#2e7d32;">${tCO2} kg</strong> CO₂</span>
+          <span><strong style="color:#1565c0;">${tW} kg</strong> waste</span>
+          <span><strong style="color:#00796b;">${tD} km</strong> avoided</span>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#607080;margin-bottom:3px;"><span>${a.unitsReused} reused (${pct}%)</span><span>${a.unitsTotal-a.unitsReused} remaining</span></div>
+        <div class="sustain-bar-wrap"><div class="sustain-bar-fill" style="width:${pct}%;"></div></div>
+      </div>
+    </div>`;
+    c.appendChild(div);
+  });
+}
+function renderSustainTable(){
+  const filter=document.getElementById('sustain-filter')?.value||"All";
+  const tbody=document.getElementById('sustain-tbody'); if(!tbody) return; tbody.innerHTML="";
+  SUSTAIN_AIDS.filter(a=>filter==="All"||a.aid===filter).forEach(a=>{
+    const t=(a.mfgCO2perUnit+a.shipCO2perUnit).toFixed(2), tA=((a.mfgCO2perUnit+a.shipCO2perUnit)*a.unitsReused).toFixed(1);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${a.icon} <strong>${a.aid}</strong></td><td style="font-size:11px;">${a.model}</td>
+      <td style="font-size:10px;color:#607080;">${a.manufacturer} ${a.aid==="Wheelchair"?"<span style='background:#e8f5e9;color:#2e7d32;border-radius:3px;padding:1px 5px;font-weight:700;'>✅</span>":"<span style='background:#fff8e1;color:#f57f17;border-radius:3px;padding:1px 5px;'>est</span>"}</td>
+      <td style="font-size:11px;">📍 ${a.origin} → ${a.dest}</td><td style="color:#00796b;font-weight:600;">${a.distKm.toLocaleString()} km</td>
+      <td>${a.weightKg} kg</td><td style="color:#2e7d32;font-weight:700;">${t} kg CO₂</td><td style="color:#1565c0;font-weight:600;">${a.mfgWasteKg} kg</td>
+      <td style="font-weight:700;">${a.unitsReused}</td><td style="color:#2e7d32;font-weight:800;font-size:13px;">${tA} kg</td>`;
+    tbody.appendChild(tr);
+  });
+  if (filter==="All"){
+    const tC=SUSTAIN_AIDS.reduce((s,a)=>s+(a.mfgCO2perUnit+a.shipCO2perUnit)*a.unitsReused,0).toFixed(1);
+    const tU=SUSTAIN_AIDS.reduce((s,a)=>s+a.unitsReused,0);
+    const tr=document.createElement('tr'); tr.style.background="#e8f5e9"; tr.style.fontWeight="700";
+    tr.innerHTML=`<td colspan="8" style="text-align:right;color:#1b5e20;">TOTAL (${tU} units reused)</td><td>${tU}</td><td style="color:#2e7d32;font-weight:900;font-size:14px;">${tC} kg CO₂</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// Zone quick view
+function buildZoneQuickView(){
+  const c=document.getElementById('zone-quick-view'); if(!c) return;
+  c.innerHTML=Object.entries(ZONES).map(([zone,d])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f4f8;font-size:12px;">
+      <div style="display:flex;align-items:center;gap:8px;"><div style="width:9px;height:9px;border-radius:50%;background:${d.color};"></div><span style="font-weight:500;">${zone}</span></div>
+      <span style="color:#607080;">${d.offices.length} offices</span>
+    </div>`).join("");
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+buildZoneQuickView();
+renderProvisionTable();
+renderRefurbZoneCards();
+renderRefurbTable();
+renderTLTable();
+updateTLTabs();
+renderSustainCards();
+renderSustainTable();
+</script>
+</body>
+</html>
